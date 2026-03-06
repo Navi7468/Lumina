@@ -1,0 +1,38 @@
+# Build directories
+build/
+bin/
+obj/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Compiled binaries
+udpleds
+led_controller
+*.out
+*.exe
+
+# Object files
+*.o
+*.obj
+*.so
+*.a
+
+# IDE files
+.vscode/
+.vs/
+*.user
+*.suo
+*.sln
+
+# Debug files
+*.dSYM/
+*.pdb
+
+# Logs
+*.log
