@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-04-03
+
+### Refactored
+
+- **Studio: extract `protocol.rs` + `PacketBuilder`** — packet building code was
+  duplicated verbatim across `send_frame`, `send_static_frame`, and `set_timeout` in
+  `main.rs` (~75 lines of repetition). All protocol constants (`PACKET_MAGIC`,
+  `PROTOCOL_VERSION`, packet type values) and a new `PacketBuilder` fluent struct have
+  been moved to `src-tauri/src/protocol.rs`. Each command now calls:
+  `PacketBuilder::new(type).sequence(n).payload(&data).build()`.
+
 ## [0.1.4] - 2026-04-03
 
 ### Added

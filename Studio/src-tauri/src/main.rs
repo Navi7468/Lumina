@@ -2,8 +2,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 // NOTE: Planned refactoring tracked in Studio/REFACTORING.md
-// Main areas: menu builder pattern, PacketBuilder struct, separate UDP module
+// Main areas: menu builder pattern, separate UDP module
 
+mod protocol;
+
+use protocol::{PacketBuilder, PACKET_TYPE_FRAME, PACKET_TYPE_STATIC_FRAME, PACKET_TYPE_SET_TIMEOUT};
 use tauri::{Menu, Submenu, MenuItem, CustomMenuItem, Manager};
 use std::net::UdpSocket;
 use std::sync::Mutex;
@@ -11,13 +14,6 @@ use tauri::State;
 
 // UDP State
 struct UdpState(Mutex<Option<UdpSocket>>);
-
-// Protocol constants
-const PACKET_MAGIC: u16 = 0xFEED;
-const PROTOCOL_VERSION: u16 = 1;
-const PACKET_TYPE_FRAME: u16 = 0;
-const PACKET_TYPE_SET_TIMEOUT: u16 = 4;
-const PACKET_TYPE_STATIC_FRAME: u16 = 5;
 
 #[tauri::command]
 fn connect_to_pi(state: State<UdpState>, ip: String, port: u16) -> Result<String, String> {
@@ -34,30 +30,13 @@ fn connect_to_pi(state: State<UdpState>, ip: String, port: u16) -> Result<String
 #[tauri::command]
 fn send_frame(state: State<UdpState>, sequence: u32, rgb_data: Vec<u8>) -> Result<(), String> {
     let socket_guard = state.0.lock().unwrap();
-    
+
     if let Some(socket) = socket_guard.as_ref() {
-        // Build V1 protocol packet
-        let mut packet = Vec::new();
-        
-        // Get current timestamp in microseconds
-        let timestamp = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_micros() as u32;
-        
-        let payload_size = rgb_data.len() as u16;
-        
-        // PacketHeader: magic, version, sequence, timestamp, type, payloadSize
-        packet.extend_from_slice(&PACKET_MAGIC.to_le_bytes());
-        packet.extend_from_slice(&PROTOCOL_VERSION.to_le_bytes());
-        packet.extend_from_slice(&sequence.to_le_bytes());
-        packet.extend_from_slice(&timestamp.to_le_bytes());
-        packet.extend_from_slice(&PACKET_TYPE_FRAME.to_le_bytes()); // type: 0 = streaming frame
-        packet.extend_from_slice(&payload_size.to_le_bytes());
-        
-        // RGB data
-        packet.extend_from_slice(&rgb_data);
-        
+        let packet = PacketBuilder::new(PACKET_TYPE_FRAME)
+            .sequence(sequence)
+            .payload(&rgb_data)
+            .build();
+
         socket.send(&packet)
             .map_err(|e| format!("Failed to send: {}", e))?;
         Ok(())
@@ -69,30 +48,13 @@ fn send_frame(state: State<UdpState>, sequence: u32, rgb_data: Vec<u8>) -> Resul
 #[tauri::command]
 fn send_static_frame(state: State<UdpState>, sequence: u32, rgb_data: Vec<u8>) -> Result<(), String> {
     let socket_guard = state.0.lock().unwrap();
-    
+
     if let Some(socket) = socket_guard.as_ref() {
-        // Build V1 protocol packet with STATIC_FRAME type
-        let mut packet = Vec::new();
-        
-        // Get current timestamp in microseconds
-        let timestamp = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_micros() as u32;
-        
-        let payload_size = rgb_data.len() as u16;
-        
-        // PacketHeader: magic, version, sequence, timestamp, type, payloadSize
-        packet.extend_from_slice(&PACKET_MAGIC.to_le_bytes());
-        packet.extend_from_slice(&PROTOCOL_VERSION.to_le_bytes());
-        packet.extend_from_slice(&sequence.to_le_bytes());
-        packet.extend_from_slice(&timestamp.to_le_bytes());
-        packet.extend_from_slice(&PACKET_TYPE_STATIC_FRAME.to_le_bytes()); // type: 5 = static frame (writes to both buffers)
-        packet.extend_from_slice(&payload_size.to_le_bytes());
-        
-        // RGB data
-        packet.extend_from_slice(&rgb_data);
-        
+        let packet = PacketBuilder::new(PACKET_TYPE_STATIC_FRAME)
+            .sequence(sequence)
+            .payload(&rgb_data)
+            .build();
+
         socket.send(&packet)
             .map_err(|e| format!("Failed to send: {}", e))?;
         Ok(())
@@ -104,31 +66,13 @@ fn send_static_frame(state: State<UdpState>, sequence: u32, rgb_data: Vec<u8>) -
 #[tauri::command]
 fn set_timeout(state: State<UdpState>, timeout_ms: u32) -> Result<(), String> {
     let socket_guard = state.0.lock().unwrap();
-    
+
     if let Some(socket) = socket_guard.as_ref() {
-        // Build timeout configuration packet
-        let mut packet = Vec::new();
-        
-        // Get current timestamp in microseconds
-        let timestamp = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_micros() as u32;
-        
-        let sequence = 0u32; // Timeout packets don't need sequence tracking
-        let payload_size = 4u16; // Just the timeout value (u32)
-        
-        // PacketHeader: magic, version, sequence, timestamp, type, payloadSize
-        packet.extend_from_slice(&PACKET_MAGIC.to_le_bytes());
-        packet.extend_from_slice(&PROTOCOL_VERSION.to_le_bytes());
-        packet.extend_from_slice(&sequence.to_le_bytes());
-        packet.extend_from_slice(&timestamp.to_le_bytes());
-        packet.extend_from_slice(&PACKET_TYPE_SET_TIMEOUT.to_le_bytes());
-        packet.extend_from_slice(&payload_size.to_le_bytes());
-        
-        // Timeout value
-        packet.extend_from_slice(&timeout_ms.to_le_bytes());
-        
+        let packet = PacketBuilder::new(PACKET_TYPE_SET_TIMEOUT)
+            .sequence(0) // timeout packets don't need sequence tracking
+            .payload(&timeout_ms.to_le_bytes())
+            .build();
+
         socket.send(&packet)
             .map_err(|e| format!("Failed to send timeout: {}", e))?;
         Ok(())
