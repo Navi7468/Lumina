@@ -31,6 +31,8 @@ bool Application::initialize() {
   driver = new WS2811Driver(LED_COUNT, LED_GPIO_PIN);
   if (!driver->initialize()) {
     std::cerr << "LED Driver initialization failed.\n";
+    delete driver;
+    driver = nullptr;
     return false;
   }
   std::cout << "LED Driver initialized (" << LED_COUNT << " LEDs)\n";

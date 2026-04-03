@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.1] - 2026-04-03
+## [0.1.2] - 2026-04-03
+
+### Fixed
+
+- **Receiver: UDP socket never closed** — `UdpServer` had no destructor; the socket
+  file descriptor was leaked for the lifetime of the process. Added `UdpServer()`
+  constructor (initialises `sockfd` to -1) and `~UdpServer()` destructor that calls
+  `close(sockfd)` when the fd is valid.
+
+- **Receiver: driver memory leak on initialisation failure** — `Application::initialize()`
+  allocated a `WS2811Driver` with `new` and returned `false` on failure without deleting
+  it. The driver pointer is now deleted and set to `nullptr` before returning `false`.
+
+- **Receiver: `ws2811_render()` return value silently ignored** — hardware DMA errors
+  would go unnoticed. `WS2811Driver::render()` now captures the `ws2811_return_t` result
+  and logs an error via `ws2811_get_return_t_str()` when the render fails.
+
+
 
 ### Fixed
 

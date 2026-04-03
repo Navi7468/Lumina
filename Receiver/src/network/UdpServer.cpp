@@ -8,6 +8,15 @@
 #include <cstring>
 #include <iostream>
 
+UdpServer::UdpServer() : sockfd(-1) {}
+
+UdpServer::~UdpServer() {
+  if (sockfd >= 0) {
+    close(sockfd);
+    sockfd = -1;
+  }
+}
+
 bool UdpServer::initialize(int port) {
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {

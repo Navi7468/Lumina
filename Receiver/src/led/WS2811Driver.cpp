@@ -52,5 +52,8 @@ void WS2811Driver::render(Frame* frame) {
   }
   
   // Render to hardware
-  ws2811_render(&ledstring);
+  ws2811_return_t ret = ws2811_render(&ledstring);
+  if (ret != WS2811_SUCCESS) {
+    std::cerr << "ws2811_render failed: " << ws2811_get_return_t_str(ret) << "\n";
+  }
 }
