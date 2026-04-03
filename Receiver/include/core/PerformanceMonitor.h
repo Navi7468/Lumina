@@ -55,7 +55,7 @@ private:
   
   // Start time
   TimePoint startTime;
-  TimePoint lastLogTime;
+  mutable TimePoint lastLogTime;  // updated in logStats() (const method)
   
   // Frame tracking
   TimePoint frameStartTime;

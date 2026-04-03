@@ -151,8 +151,8 @@ void PerformanceMonitor::logStats() const {
               << (stats.packetLossRate * 100.0f) << "%\n";
   }
   
-  // Update last log time (const_cast is safe here for internal tracking)
-  const_cast<PerformanceMonitor*>(this)->lastLogTime = Clock::now();
+  // Update last log time
+  lastLogTime = Clock::now();
 }
 
 float PerformanceMonitor::getElapsedSeconds() const {

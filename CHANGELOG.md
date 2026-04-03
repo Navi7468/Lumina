@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-04-03
+
+### Fixed
+
+- **Receiver: `const_cast` antipattern in `PerformanceMonitor::logStats()`** — `lastLogTime`
+  was updated from a `const` method using `const_cast<PerformanceMonitor*>(this)`, which
+  is undefined behaviour if the object was originally declared `const`. Marked `lastLogTime`
+  as `mutable` in the header; the `const_cast` is removed.
+
+- **Receiver: `Frame` buffer wastes ~1.5 KB per buffer** — `MAX_LEDS` was hardcoded to 600
+  while `config.h` defines `LED_COUNT` as 60, meaning each `Frame::data` array was
+  10× larger than needed (1800 bytes vs 180 bytes). Removed the standalone `MAX_LEDS`
+  constant; `Frame::data` is now sized `LED_COUNT * 3`, derived directly from `config.h`.
+
 ## [0.1.2] - 2026-04-03
 
 ### Fixed
