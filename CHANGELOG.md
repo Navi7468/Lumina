@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-04-03
+
+### Fixed
+
+- **Receiver: race condition on `DoubleBuffer::back` pointer** — `back` was a plain
+  (non-atomic) pointer accessed from two threads. The network thread read it via
+  `getBack()` before writing packet data; the main thread modified it (and the pointer
+  itself) in `swap()`. Added `std::mutex back_mutex` to `DoubleBuffer`; `swap()` now
+  acquires this mutex internally, and every caller that accesses the back buffer (network
+  write, `fadeToBlack`) must hold it via `std::lock_guard`.
+
+- **Receiver: data race between `fadeToBlack()` and network writes** — the main thread
+  iterated over `back->data` applying a fade multiplier while the network thread could
+  simultaneously `memcpy` new RGB data into the same memory. `fadeToBlack()` now acquires
+  `back_mutex` before touching the buffer.
+
+- **Receiver: network thread writing directly to the front buffer** — `UdpServer::poll()`
+  accepted an optional `frontBuffer` pointer and wrote to it for `PACKET_TYPE_STATIC_FRAME`
+  packets, racing with the main thread reading that same buffer for rendering. The front
+  buffer parameter has been removed from `poll()`. Instead, the main thread checks an
+  atomic `staticFramePending` flag after each `swap()` and safely copies the new front
+  buffer into the new back buffer under `back_mutex`, achieving the same flicker-free
+  scrubbing behavior without cross-thread front-buffer writes.
+
 ### Added
 
 - Tauri-based desktop application with React + TypeScript

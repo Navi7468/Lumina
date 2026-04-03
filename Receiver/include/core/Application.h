@@ -28,10 +28,16 @@ private:
 
   std::thread networkThread;
   std::atomic<bool> running;
-  
+
   // Timeout tracking
   std::chrono::steady_clock::time_point lastPacketTime;
   std::atomic<bool> hasReceivedPacket;
   std::atomic<int> fadeStep;  // For gradual fade to black
   std::atomic<int> currentTimeoutMs;  // Configurable timeout duration
+
+  // Set by the network thread when a STATIC_FRAME is received. The main
+  // thread checks this after swap() and mirrors the new front buffer into
+  // the new back buffer so the static frame persists across future swaps
+  // without the network thread ever touching the front buffer.
+  std::atomic<bool> staticFramePending;
 };

@@ -22,7 +22,8 @@ struct PacketInfo {
 class UdpServer {
 public:
   bool initialize(int port);
-  PacketInfo poll(Frame* backBuffer, Frame* frontBuffer = nullptr);
+  // backBuffer must be accessed under DoubleBuffer::back_mutex by the caller.
+  PacketInfo poll(Frame* backBuffer);
 
 private:
   int sockfd;

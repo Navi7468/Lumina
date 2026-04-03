@@ -48,7 +48,7 @@ bool UdpServer::initialize(int port) {
   return true;
 }
 
-PacketInfo UdpServer::poll(Frame* backBuffer, Frame* frontBuffer) {
+PacketInfo UdpServer::poll(Frame* backBuffer) {
   PacketInfo info;
   info.result = PollResult::NO_DATA;
   info.sequence = 0;
@@ -130,21 +130,15 @@ PacketInfo UdpServer::poll(Frame* backBuffer, Frame* frontBuffer) {
       return info;
     }
 
-    // Copy RGB data to back buffer
+    // Copy RGB data to back buffer only.
+    // The main thread mirrors this to the new back buffer after swap() when
+    // it sees Application::staticFramePending, keeping the front buffer
+    // exclusively written by the main thread.
     size_t copySize = std::min(
       static_cast<size_t>(backBuffer->ledCount * 3),
       static_cast<size_t>(packet->header.payloadSize)
     );
     std::memcpy(backBuffer->data, packet->rgbData, copySize);
-
-    // Also copy to front buffer if provided
-    if (frontBuffer) {
-      size_t frontCopySize = std::min(
-        static_cast<size_t>(frontBuffer->ledCount * 3),
-        static_cast<size_t>(packet->header.payloadSize)
-      );
-      std::memcpy(frontBuffer->data, packet->rgbData, frontCopySize);
-    }
 
     // Return static frame result
     info.result = PollResult::STATIC_FRAME;

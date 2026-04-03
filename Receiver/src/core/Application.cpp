@@ -3,6 +3,7 @@
 #include "config.h"
 
 #include <chrono>
+#include <cstring>
 #include <iostream>
 
 Application::Application() 
@@ -11,6 +12,7 @@ Application::Application()
   , hasReceivedPacket(false)
   , fadeStep(0)
   , currentTimeoutMs(PACKET_TIMEOUT_MS)
+  , staticFramePending(false)
 {}
 
 Application::~Application() {
@@ -80,6 +82,17 @@ void Application::run() {
     // Swap buffers
     buffers.swap();
 
+    // If a static frame was received, mirror the new front buffer into the new
+    // back buffer so the frame remains visible across future swaps without the
+    // network thread ever writing directly to the front buffer.
+    if (staticFramePending.exchange(false)) {
+      std::lock_guard<std::mutex> lock(buffers.back_mutex);
+      Frame* f = buffers.getFront();
+      Frame* b = buffers.getBack();
+      b->ledCount = f->ledCount;
+      std::memcpy(b->data, f->data, f->ledCount * 3);
+    }
+
     // Render front buffer
     driver->render(buffers.getFront());
 
@@ -119,7 +132,11 @@ void Application::stop() {
 
 void Application::networkLoop() {
   while (running) {
-    PacketInfo info = udp.poll(buffers.getBack(), buffers.getFront());
+    PacketInfo info;
+    {
+      std::lock_guard<std::mutex> lock(buffers.back_mutex);
+      info = udp.poll(buffers.getBack());
+    }
 
     switch (info.result) {
       case PollResult::SUCCESS:
@@ -134,12 +151,13 @@ void Application::networkLoop() {
         break;
 
       case PollResult::STATIC_FRAME:
-        // Static frame - written to BOTH buffers (scrubbing mode)
-        // Update timeout tracking
+        // Static frame written to back buffer; the main thread will mirror it
+        // to the new back buffer after swap() via staticFramePending.
         lastPacketTime = std::chrono::steady_clock::now();
         hasReceivedPacket = true;
         fadeStep = 0;  // Reset fade
-        
+        staticFramePending = true;
+
         // Record packet stats
         perfMonitor.recordPacketReceived(info.sequence, info.timestamp);
         break;
@@ -195,6 +213,7 @@ void Application::handleTimeout() {
 }
 
 void Application::fadeToBlack() {
+  std::lock_guard<std::mutex> lock(buffers.back_mutex);
   Frame* frame = buffers.getBack();
   int currentFade = fadeStep.load();
   
