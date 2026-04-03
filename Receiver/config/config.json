@@ -1,0 +1,8 @@
+{
+  "udp_port": 7777,
+  "led_count": 60,
+  "gpio_pin": 18,
+  "target_fps": 60,
+  "packet_timeout_ms": 1000,
+  "fade_steps": 30
+}

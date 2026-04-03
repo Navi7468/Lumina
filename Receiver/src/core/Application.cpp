@@ -1,4 +1,5 @@
 #include "core/Application.h"
+#include "core/ConfigLoader.h"
 #include "led/WS2811Driver.h"
 #include "config.h"
 
@@ -24,28 +25,33 @@ Application::~Application() {
 }
 
 bool Application::initialize() {
+  // Load runtime config (falls back to compiled-in defaults if file not found).
+  ConfigLoader::load("config.json", config);
+  // Sync the atomic timeout with the (possibly overridden) config value.
+  currentTimeoutMs.store(config.packetTimeoutMs);
+
   std::cout << "Initializing UDP LED Controller V1...\n";
   std::cout << "Protocol Version: " << PROTOCOL_VERSION << "\n";
 
   // Initialize LED driver
-  driver = new WS2811Driver(LED_COUNT, LED_GPIO_PIN);
+  driver = new WS2811Driver(config.ledCount, config.gpioPin);
   if (!driver->initialize()) {
     std::cerr << "LED Driver initialization failed.\n";
     delete driver;
     driver = nullptr;
     return false;
   }
-  std::cout << "LED Driver initialized (" << LED_COUNT << " LEDs)\n";
+  std::cout << "LED Driver initialized (" << config.ledCount << " LEDs)\n";
   
   // Initialize UDP
-  if (!udp.initialize(UDP_PORT)) {
+  if (!udp.initialize(config.udpPort)) {
     std::cerr << "UDP initialization failed.\n";
     return false;
   }
 
   // Set LED count in buffers and clear them
-  buffers.getFront()->ledCount = LED_COUNT;
-  buffers.getBack()->ledCount = LED_COUNT;
+  buffers.getFront()->ledCount = config.ledCount;
+  buffers.getBack()->ledCount  = config.ledCount;
   buffers.getFront()->clear();
   buffers.getBack()->clear();
 
@@ -58,7 +64,7 @@ bool Application::initialize() {
   networkThread = std::thread(&Application::networkLoop, this);
 
   std::cout << "Application initialized successfully.\n";
-  std::cout << "Packet timeout: " << PACKET_TIMEOUT_MS << " ms\n";
+  std::cout << "Packet timeout: " << config.packetTimeoutMs << " ms\n";
   
   if (ENABLE_PERF_LOGGING) {
     std::cout << "Performance logging enabled (interval: " 
@@ -72,7 +78,7 @@ bool Application::initialize() {
 
 void Application::run() {
   using clock = std::chrono::steady_clock;
-  const std::chrono::milliseconds frameTime(1000 / TARGET_FPS);
+  const std::chrono::milliseconds frameTime(1000 / config.targetFps);
 
   while (running) {
     perfMonitor.startFrame();
@@ -207,7 +213,7 @@ void Application::handleTimeout() {
       std::cerr << "\n⚠️  Packet timeout! No data for " << elapsed << " ms (timeout: " << timeoutMs << " ms). Fading to black...\n";
     }
     
-    if (currentFade < FADE_STEPS) {
+    if (currentFade < config.fadeSteps) {
       fadeToBlack();
       fadeStep++;
     }
@@ -220,7 +226,7 @@ void Application::fadeToBlack() {
   int currentFade = fadeStep.load();
   
   // Calculate fade factor (1.0 -> 0.0)
-  float fadeFactor = 1.0f - (static_cast<float>(currentFade) / FADE_STEPS);
+  float fadeFactor = 1.0f - (static_cast<float>(currentFade) / config.fadeSteps);
   
   // Apply fade to all LEDs
   for (u32 i = 0; i < frame->ledCount * 3; ++i) {

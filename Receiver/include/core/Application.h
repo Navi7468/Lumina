@@ -1,4 +1,5 @@
 #pragma once
+#include "Config.h"
 #include "DoubleBuffer.h"
 #include "PerformanceMonitor.h"
 #include "../network/UdpServer.h"
@@ -25,6 +26,7 @@ private:
   UdpServer udp;
   LedDriver* driver;
   PerformanceMonitor perfMonitor;
+  Config config;
 
   std::thread networkThread;
   std::atomic<bool> running;

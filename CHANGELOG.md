@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-04-03
+
+### Added
+
+- **Receiver: runtime JSON config file** — `config.h` compile-time constants are now
+  overridable at startup by placing a `config.json` file in the working directory.
+  A reference file with all available keys is provided at `Receiver/config/config.json`.
+  If the file is absent or unparseable the receiver falls back to the compiled-in defaults
+  seamlessly. Configurable fields: `udp_port`, `led_count`, `gpio_pin`, `target_fps`,
+  `packet_timeout_ms`, `fade_steps`. Runtime `led_count` is capped to the compile-time
+  `LED_COUNT` (the `Frame` buffer size limit) with a logged warning.
+
+- **Receiver: `nlohmann/json` dependency** — added as a header-only FetchContent
+  dependency in `CMakeLists.txt` (tag v3.11.3, `GIT_SHALLOW TRUE`). Requires internet
+  access on first `cmake ..` run; subsequent builds use the cached clone.
+
 ## [0.1.3] - 2026-04-03
 
 ### Fixed
