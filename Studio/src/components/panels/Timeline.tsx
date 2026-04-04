@@ -1,40 +1,39 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipBack, SkipForward, StepBack, StepForward, ZoomIn, ZoomOut, Layers, Repeat } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Layers } from 'lucide-react';
 import { useProjectStore } from '@/store/projectStore';
-import { usePlaybackStore } from '@/store/playbackStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { AdjustmentLayer } from '@/engine/AdjustmentLayer';
 import { cn } from '@/lib/utils';
 import { CanvasTimeline } from './CanvasTimeline';
-
-interface ClipDragState {
-  layerId: string;
-  startX: number;
-  originalStartTime: number;
-  originalDuration: number;
-  mode: 'move' | 'resize-left' | 'resize-right';
-}
+import { TimelineToolbar } from './TimelineToolbar';
+import { useClipInteraction } from '@/hooks/useClipInteraction';
 
 export function Timeline() {
-  const { project, setPlayhead, toggleLoop, skipToEnd, stepBackward, stepForward, updateLayer, selectLayer } = useProjectStore();
-  const { isPlaying, play, pause, stop } = usePlaybackStore();
-  const { playhead, config, layers, selectedLayerId, loop } = project;
+  const { project, setPlayhead, updateLayer, selectLayer } = useProjectStore();
+  const { playhead, config, layers, selectedLayerId } = project;
   const { timelineRenderer } = usePreferencesStore();
-  
+
   const [zoom, setZoom] = useState(100); // zoom percentage (50-300%)
   const [scrollOffset, setScrollOffset] = useState(0);
-  const [dragState, setDragState] = useState<ClipDragState | null>(null);
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
   
   const timelineRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
-  
+
   // Calculate pixel width based on zoom percentage
   const pixelsPerSecond = zoom; // 100% = 100px per second
   const timelineWidth = (config.duration / 1000) * pixelsPerSecond; // px
   const playheadPosition = (playhead / 1000) * pixelsPerSecond; // px
-  
+
+  // Clip drag interaction (legacy HTML renderer only)
+  const { dragState, handleClipMouseDown } = useClipInteraction({
+    layers,
+    pixelsPerSecond,
+    duration: config.duration,
+    updateLayer,
+    selectLayer,
+  });
+
   const handleRulerInteraction = (e: React.MouseEvent<HTMLDivElement>) => {
     if (dragState) return;
     
@@ -48,27 +47,6 @@ export function Timeline() {
     if (dragState) return;
     setIsDraggingPlayhead(true);
     handleRulerInteraction(e);
-  };
-  
-  const handleClipMouseDown = (
-    e: React.MouseEvent,
-    layerId: string,
-    mode: 'move' | 'resize-left' | 'resize-right'
-  ) => {
-    e.stopPropagation();
-    
-    const layer = layers.find(l => l.id === layerId);
-    if (!layer || layer.locked) return;
-    
-    selectLayer(layerId);
-    
-    setDragState({
-      layerId,
-      startX: e.clientX,
-      originalStartTime: layer.startTime,
-      originalDuration: layer.duration,
-      mode,
-    });
   };
   
   // Handle playhead dragging
@@ -97,57 +75,6 @@ export function Timeline() {
     };
   }, [isDraggingPlayhead, scrollOffset, pixelsPerSecond, config.duration, setPlayhead]);
   
-  // Handle clip dragging
-  useEffect(() => {
-    if (!dragState) return;
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - dragState.startX;
-      const deltaTime = (deltaX / pixelsPerSecond) * 1000;
-      
-      const layer = layers.find(l => l.id === dragState.layerId);
-      if (!layer) return;
-      
-      if (dragState.mode === 'move') {
-        const newStartTime = Math.max(0, Math.min(
-          dragState.originalStartTime + deltaTime,
-          config.duration - layer.duration
-        ));
-        updateLayer(dragState.layerId, { startTime: newStartTime });
-      } else if (dragState.mode === 'resize-left') {
-        const newStartTime = Math.max(0, dragState.originalStartTime + deltaTime);
-        const newDuration = Math.max(100, dragState.originalDuration - deltaTime);
-        
-        // Ensure doesn't go past end
-        if (newStartTime + newDuration <= config.duration) {
-          updateLayer(dragState.layerId, { 
-            startTime: newStartTime,
-            duration: newDuration
-          });
-        }
-      } else if (dragState.mode === 'resize-right') {
-        const newDuration = Math.max(100, dragState.originalDuration + deltaTime);
-        
-        // Ensure doesn't exceed timeline
-        if (layer.startTime + newDuration <= config.duration) {
-          updateLayer(dragState.layerId, { duration: newDuration });
-        }
-      }
-    };
-    
-    const handleMouseUp = () => {
-      setDragState(null);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [dragState, layers, zoom, config.duration, updateLayer]);
-  
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const scrollLeft = e.currentTarget.scrollLeft;
     setScrollOffset(scrollLeft);
@@ -156,11 +83,6 @@ export function Timeline() {
     if (rulerRef.current) {
       rulerRef.current.scrollLeft = scrollLeft;
     }
-  };
-  
-  const formatTime = (ms: number): string => {
-    const seconds = ms / 1000;
-    return `${seconds.toFixed(2)}s`;
   };
   
   // Generate time markers for ruler
@@ -183,106 +105,8 @@ export function Timeline() {
   
   return (
     <div className="border-t border-border bg-background flex flex-col h-full select-none overflow-hidden min-w-0">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 p-1 border-b border-border bg-muted/30">
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={stop}
-          title="Stop (Go to Beginning)"
-        >
-          <SkipBack className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={stepBackward}
-          title="Step Backward One Frame"
-        >
-          <StepBack className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          size="icon"
-          className="h-6 w-6"
-          onClick={isPlaying ? pause : play}
-          title={isPlaying ? 'Pause' : 'Play'}
-        >
-          {isPlaying ? (
-            <Pause className="h-4 w-4" />
-          ) : (
-            <Play className="h-4 w-4" />
-          )}
-        </Button>
-        
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={stepForward}
-          title="Step Forward One Frame"
-        >
-          <StepForward className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={skipToEnd}
-          title="Skip to End"
-        >
-          <SkipForward className="h-4 w-4" />
-        </Button>
-        
-        <div className="h-4 w-px bg-border mx-1" />
-        
-        <span className="text-xs tabular-nums">
-          {formatTime(playhead)} / {formatTime(config.duration)}
-        </span>
-        
-        <div className="flex-1" />
-        
-        <Button
-          size="icon"
-          variant={loop ? "default" : "ghost"}
-          className="h-6 w-6"
-          onClick={toggleLoop}
-          title={loop ? "Loop Enabled" : "Loop Disabled"}
-        >
-          <Repeat className="h-4 w-4" />
-        </Button>
-        
-        <div className="h-4 w-px bg-border mx-1" />
-        
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={() => setZoom(Math.max(50, zoom - 10))}
-          title="Zoom Out"
-        >
-          <ZoomOut className="h-3 w-3" />
-        </Button>
-        
-        <span className="text-xs text-muted-foreground w-12 text-center">
-          {zoom}%
-        </span>
-        
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={() => setZoom(Math.min(300, zoom + 10))}
-          title="Zoom In"
-        >
-          <ZoomIn className="h-3 w-3" />
-        </Button>
-      </div>
-      
+      <TimelineToolbar zoom={zoom} onZoomChange={setZoom} />
+
       {/* Timeline Content - Conditionally render based on preference */}
       {timelineRenderer === 'canvas' ? (
         <CanvasTimeline zoom={zoom} setZoom={setZoom} />

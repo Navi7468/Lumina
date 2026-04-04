@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-04-03
+
+### Changed
+
+- **Studio: extract `TimelineToolbar` from `Timeline.tsx`** — all playback controls
+  (stop, step back/forward, play/pause, skip-to-end, loop toggle, zoom in/out, time
+  display) moved to `TimelineToolbar.tsx`. Reads `useProjectStore` and
+  `usePlaybackStore` directly; accepts `zoom` and `onZoomChange` as props.
+
+- **Studio: extract `useClipInteraction` hook** — clip drag-move and resize logic
+  (mouse down handler + document mousemove/mouseup effect) moved to
+  `src/hooks/useClipInteraction.ts`. `Timeline.tsx` trimmed from 438 → 258 lines.
+
 ## [0.1.9] - 2026-04-03
 
 ### Changed

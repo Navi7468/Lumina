@@ -31,7 +31,10 @@ This document tracks planned architectural improvements and refactoring work for
 
 ### Component Architecture
 
-- [ ] Break down large components (Timeline, CanvasTimeline)
+- [x] Break down large components (Timeline, CanvasTimeline)
+  - [x] Extract `TimelineToolbar` from `Timeline.tsx` (v0.1.10)
+  - [x] Extract `useClipInteraction` hook from `Timeline.tsx` (v0.1.10)
+  - [ ] Break down CanvasTimeline further if needed
 - [x] Extract `AppHeader` component from `App.tsx` (v0.1.9)
 - [ ] Extract common hooks patterns
 - [ ] Consider lazy loading for panels
