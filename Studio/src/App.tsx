@@ -1,15 +1,4 @@
-// TODO: Planned improvements for App.tsx
-// - Add drag-and-drop module reordering (Effects/Layers/Preview/Timeline positions configurable)
-// - Extract Header into separate component (AppHeader.tsx)
-// - Extract keyboard shortcut handlers to dedicated hook or config file
-// - Extract selection toolbar logic into custom hook (useSelectionToolbar)
-// - Consider splitting into smaller components (LeftSidebar, CenterPanel, RightSidebar)
-// - Add error boundary for graceful failure handling
-// - Optimize re-renders (memoize expensive computations, callbacks)
-// - Add loading states for theme application and initial render
-// - Consider lazy loading panels for faster initial load
-
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LEDPreview } from './components/preview/LEDPreview';
 import { LEDSelectionPreview } from './components/preview/LEDSelectionPreview';
 import { SelectionToolbar } from './components/common/SelectionToolbar';
@@ -17,19 +6,16 @@ import { Timeline } from './components/panels/Timeline';
 import { LayerPanel } from './components/panels/LayerPanel';
 import { PropertiesPanel } from './components/panels/PropertiesPanel';
 import { EffectsLibrary } from './components/panels/EffectsLibrary';
-import { SettingsDialog } from './components/dialogs/SettingsDialog';
-import { PaletteManagerDialog } from './components/dialogs/PaletteManager';
-import { PreferencesDialog } from './components/dialogs/PreferencesDialog';
-import { PiConnectionDialog } from './components/dialogs/PiConnectionDialog';
+import { AppHeader } from './components/common/AppHeader';
 import { useProjectStore } from './store/projectStore';
 import { usePlaybackStore } from './store/playbackStore';
 import { usePiStore } from './store/piStore';
 import { usePreferencesStore, type Theme } from './store/preferencesStore';
 import { renderEngine } from './engine/RenderEngine';
-import { listen } from '@tauri-apps/api/event';
 import { usePiStreaming } from './hooks/usePiStreaming';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePlayback } from './hooks/usePlayback';
+import { useMenuEvents } from './hooks/useMenuEvents';
 import { useResizableSashes } from './hooks/useResizableSashes';
 import { Module } from './components/common/Module';
 import { Sparkles, Layers, Clock, Settings, Eye } from 'lucide-react';
@@ -44,7 +30,7 @@ function App() {
   } = useProjectStore();
   const { isPlaying, play, pause, stop } = usePlaybackStore();
   const { isPiConnected, isStreamingOnPlayback, isStreamingOnScrub } = usePiStore();
-  const { 
+  const {
     theme, 
     leftSidebarWidth, 
     rightSidebarWidth,
@@ -56,7 +42,6 @@ function App() {
     setPreviewHeight
   } = usePreferencesStore();
   const [headerHeight, setHeaderHeight] = useState(0);
-  const headerRef = useRef<HTMLDivElement>(null);
   
   // Resizable sashes hook
   const { leftSidebarRef, centerAreaRef, mainContentRef, renderSashes } = useResizableSashes({
@@ -137,34 +122,9 @@ function App() {
     },
   });
   
-  // Measure header height for absolute positioning
-  useEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight);
-    }
-  }, []);
-  
-  // Listen for menu playback events
-  useEffect(() => {
-    const unlistenPlay = listen('playback-play', () => {
-      play();
-    });
-    
-    const unlistenPause = listen('playback-pause', () => {
-      pause();
-    });
-    
-    const unlistenStop = listen('playback-stop', () => {
-      stop();
-    });
+  // Menu event bridge (Tauri → playback actions)
+  useMenuEvents({ play, pause, stop });
 
-    return () => {
-      unlistenPlay.then(fn => fn());
-      unlistenPause.then(fn => fn());
-      unlistenStop.then(fn => fn());
-    };
-  }, [play, pause, stop]);
-  
   // Apply theme on load and when it changes
   useEffect(() => {
     const applyTheme = (theme: Theme) => {
@@ -208,25 +168,7 @@ function App() {
   
   return (
     <div className="h-screen flex flex-col bg-background text-foreground relative">
-      {/* Header */}
-      <div ref={headerRef} className="border-b border-border px-4 py-2 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">LED Controller</h1>
-          <p className="text-xs text-muted-foreground">{project.name}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="text-xs text-muted-foreground text-right">
-            <div>{project.config.ledCount} LEDs</div>
-            <div>{project.config.fps} FPS</div>
-          </div>
-          <div className="h-6 w-px bg-border mx-1" />
-          <PiConnectionDialog />
-          <div className="h-6 w-px bg-border mx-1" />
-          <SettingsDialog />
-          <PaletteManagerDialog />
-          <PreferencesDialog />
-        </div>
-      </div>
+      <AppHeader onHeightChange={setHeaderHeight} />
       
       {/* Main content */}
       <div ref={mainContentRef} className="flex-1 flex overflow-hidden relative">

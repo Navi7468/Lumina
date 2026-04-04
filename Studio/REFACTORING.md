@@ -32,12 +32,13 @@ This document tracks planned architectural improvements and refactoring work for
 ### Component Architecture
 
 - [ ] Break down large components (Timeline, CanvasTimeline)
+- [x] Extract `AppHeader` component from `App.tsx` (v0.1.9)
 - [ ] Extract common hooks patterns
 - [ ] Consider lazy loading for panels
 
 ## General
 
-- [ ] Add comprehensive error boundaries
+- [x] Add error boundary for graceful failure handling (v0.1.9)
 - [ ] Improve error messages (more user-friendly)
 - [ ] Add loading states for async operations
 - [ ] Audit accessibility (keyboard navigation, ARIA labels)

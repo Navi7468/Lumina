@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-04-03
+
+### Changed
+
+- **Studio: extract `AppHeader` from `App.tsx`** — header markup (title, project name,
+  LED count/FPS stats, all dialog buttons) moved to `AppHeader.tsx`. Reports its
+  rendered height via an `onHeightChange` callback so sash overlay positioning is
+  unaffected.
+
+- **Studio: extract menu event bridge to `useMenuEvents`** — the `useEffect` that
+  subscribed to Tauri `playback-play/pause/stop` events is now a dedicated hook in
+  `src/hooks/useMenuEvents.ts`, keeping `App.tsx` free of `listen` boilerplate.
+
+- **Studio: add `ErrorBoundary` component** — class component in
+  `src/components/common/ErrorBoundary.tsx` catches unhandled render errors and
+  displays a recoverable error screen. Wired in `main.tsx` wrapping `<App />`.
+
 ## [0.1.8] - 2026-04-03
 
 ### Changed
