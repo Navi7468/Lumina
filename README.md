@@ -3,7 +3,7 @@
 A desktop application for creating, sequencing, and controlling LED strip animations via UDP. Built with Tauri, React, and TypeScript for the editor, with a lightweight C++ receiver for Raspberry Pi.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-0.1.7--alpha-orange.svg)
+![Version](https://img.shields.io/badge/version-0.2.0--alpha-orange.svg)
 
 ## What is this?
 
@@ -20,11 +20,11 @@ A visual timeline editor for creating LED animations, similar to video editing s
 - Multi-stop gradient editor with 8 built-in presets
 - Global color palette system
 - LED selection tools for targeting specific LED ranges
+- **Save and load projects** as `.lumina` files via the File menu
 
 **What Doesn't Work Yet:**
 
-- Saving/loading projects (you lose everything when you close the app)
-- Creating new projects (there's a button but it doesn't do anything)
+- Creating new projects (there's a button but it doesn't do anything yet)
 - Undo/redo is limited
 - No audio import or reactivity (Future implementation)
 - Most of the menu items don't do anything yet
@@ -105,13 +105,11 @@ buffer-size ceiling). To support more than 60 LEDs, rebuild with an updated
 
 See [Receiver/README.md](Receiver/README.md) for full setup instructions.
 
-Note: Studio network settings (IP and port) connect to the receiver; most other
-project settings don't persist yet (save/load is planned).
+Note: Studio network settings (IP and port) connect to the receiver. Projects can
+be saved and loaded via **File › Save Project** / **File › Open Project**.
 
 ## Known Issues
 
-- No save/load - everything is lost when you close the app
-- Project menu doesn't work yet
 - Limited undo/redo functionality
 - Some UI elements are just placeholders
 - Performance needs work for almost everything currently
@@ -126,7 +124,7 @@ Things I'm working on or planning to add. No promises on timelines since this is
 
 **Soon:**
 
-- Project save/load functionality
+- New Project dialog
 - Improved theme system for app
 - Custom title bar with proper window controls
 - Drag selection in timeline

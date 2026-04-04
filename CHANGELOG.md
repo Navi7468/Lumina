@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-03
+
+### Added
+
+- **Studio: Project Save / Load (`.lumina` format)** — projects can now be saved to
+  and loaded from disk via **File › Save Project**, **File › Save As…**, and
+  **File › Open Project**. Files are stored as `.lumina` JSON documents.
+
+- **Studio: `src/lib/projectSerializer.ts`** — pure serialization layer that converts
+  the live object graph (class instances of `EffectLayer`, `AdjustmentLayer`, `IEffect`,
+  `IModifier`) to a plain, JSON-safe `SerializedProject` DTO and back. Effect and
+  modifier instances are represented as registry-ID strings; parameters, envelopes,
+  modifiers, and all layer geometry are fully round-tripped. Throws descriptive errors
+  if an unknown effect/modifier ID is encountered during load.
+
+- **Studio: `src/hooks/useProjectFile.ts`** — React hook that wraps the Tauri native
+  file-dialog and fs APIs (`@tauri-apps/api/dialog` + `@tauri-apps/api/fs`). Tracks
+  the current file path so "Save" skips the dialog on subsequent saves. Exposes
+  `save(forceSaveAs?)` and `open()` callbacks.
+
+### Changed
+
+- **Studio: `useMenuEvents` extended with file-menu handlers** — optional
+  `newProject`, `openProject`, `saveProject`, and `saveProjectAs` callbacks added to
+  the `MenuEventHandlers` interface; the existing playback handlers are unchanged.
+
+- **Tauri: enable `fs` and `dialog` allowlist APIs** — `tauri.conf.json` now enables
+  `fs.readFile`, `fs.writeFile` (scoped to `$HOME`, `$DOCUMENT`, `$DESKTOP`), and
+  `dialog.open`, `dialog.save`. Corresponding Cargo features `dialog-open`,
+  `dialog-save`, `fs-read-file`, `fs-write-file` added to `Cargo.toml`.
+
 ## [0.1.10] - 2026-04-03
 
 ### Changed
