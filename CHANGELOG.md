@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-04
+
+### Added
+
+- **Studio: `engine/types.ts` extended with v0.3 data model** — new types added
+  (all optional/additive on existing interfaces):
+  - `Track` — named, colored timeline lane with LED range, mute/solo/lock/expanded
+    state, height, and bus/normal type
+  - `EffectBlock` / `EffectChainConfig` — chain authoring model; a clip can hold an
+    ordered array of composable effect/modifier blocks, each with its own mix mode
+    and amount
+  - `NodeGraphConfig` / `GraphNode` / `NodeConnection` / `NodePort` — node graph
+    skeleton types for the future Node layout mode
+  - `Pattern` — reusable named group of clip IDs; multiple instances reference one
+    pattern so edits propagate everywhere
+  - `Cue` — live-trigger entry referencing a pattern, with optional keyboard key
+    assignment
+  - `EffectBlockMixMode` — `replace | add | multiply | screen | normal`
+  - `Project` gains optional `tracks`, `patterns`, `cueList`, `bpm`,
+    `timeSignature` fields
+  - `ILayer` gains optional `trackId`, `effectChainConfig`, `nodeGraphConfig`,
+    `patternId` fields
+
+- **Studio: `projectSerializer.ts` extended for new fields** — `serializeProject`
+  and `deserializeProject` round-trip all v0.3 fields. `SerializedProject` and
+  `SerializedLayerBase` DTOs updated accordingly. `FORMAT_VERSION` bumped to 2.
+  While in alpha the deserializer no longer throws on version mismatches — it logs
+  a warning and loads best-effort instead.
+
 ## [0.2.5] - 2026-04-04
 
 ### Added

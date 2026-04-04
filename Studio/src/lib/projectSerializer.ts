@@ -15,13 +15,18 @@ import type {
   BoundingBox,
   ModifierInstance,
   Keyframe,
+  Track,
+  Pattern,
+  Cue,
+  EffectChainConfig,
+  NodeGraphConfig,
 } from '@/engine/types';
 import { EffectLayer } from '@/engine/Layer';
 import { AdjustmentLayer } from '@/engine/AdjustmentLayer';
 import { EffectRegistry } from '@/engine/EffectRegistry';
 import { ModifierRegistry } from '@/engine/ModifierRegistry';
 
-const FORMAT_VERSION = 1;
+const FORMAT_VERSION = 2;
 
 // ---------------------------------------------------------------------------
 // Serialized DTO types
@@ -48,6 +53,10 @@ interface SerializedLayerBase {
   ledStart: number;
   ledEnd: number;
   ledMask?: number[];
+  trackId?: string;
+  effectChainConfig?: EffectChainConfig;
+  nodeGraphConfig?: NodeGraphConfig;
+  patternId?: string;
 }
 
 interface SerializedEffectLayer extends SerializedLayerBase {
@@ -76,6 +85,11 @@ export interface SerializedProject {
   playhead: number;
   loop: boolean;
   layers: SerializedLayer[];
+  tracks?: Track[];
+  patterns?: Pattern[];
+  cueList?: Cue[];
+  bpm?: number;
+  timeSignature?: [number, number];
 }
 
 // ---------------------------------------------------------------------------
@@ -106,6 +120,14 @@ function serializeLayer(layer: ILayer): SerializedLayer {
     ledStart: layer.ledStart,
     ledEnd: layer.ledEnd,
     ledMask: layer.ledMask ? [...layer.ledMask] : undefined,
+    trackId: layer.trackId,
+    effectChainConfig: layer.effectChainConfig
+      ? JSON.parse(JSON.stringify(layer.effectChainConfig))
+      : undefined,
+    nodeGraphConfig: layer.nodeGraphConfig
+      ? JSON.parse(JSON.stringify(layer.nodeGraphConfig))
+      : undefined,
+    patternId: layer.patternId,
   };
 
   if (layer instanceof AdjustmentLayer) {
@@ -150,6 +172,11 @@ export function serializeProject(project: Project): SerializedProject {
     playhead: project.playhead,
     loop: project.loop,
     layers: project.layers.map(serializeLayer),
+    tracks: project.tracks ? JSON.parse(JSON.stringify(project.tracks)) : undefined,
+    patterns: project.patterns ? JSON.parse(JSON.stringify(project.patterns)) : undefined,
+    cueList: project.cueList ? JSON.parse(JSON.stringify(project.cueList)) : undefined,
+    bpm: project.bpm,
+    timeSignature: project.timeSignature ? [...project.timeSignature] : undefined,
   };
 }
 
@@ -170,6 +197,13 @@ function deserializeModifier(data: SerializedModifier): ModifierInstance {
   };
 }
 
+function applyV030LayerFields(layer: ILayer, data: SerializedLayerBase): void {
+  if (data.trackId !== undefined) layer.trackId = data.trackId;
+  if (data.effectChainConfig !== undefined) layer.effectChainConfig = JSON.parse(JSON.stringify(data.effectChainConfig));
+  if (data.nodeGraphConfig !== undefined) layer.nodeGraphConfig = JSON.parse(JSON.stringify(data.nodeGraphConfig));
+  if (data.patternId !== undefined) layer.patternId = data.patternId;
+}
+
 function deserializeLayer(data: SerializedLayer): ILayer {
   if (data.type === 'adjustment') {
     const layer = new AdjustmentLayer(data.id, data.name, data.startTime, data.duration);
@@ -185,6 +219,7 @@ function deserializeLayer(data: SerializedLayer): ILayer {
     layer.primaryModifier = data.primaryModifier ? deserializeModifier(data.primaryModifier) : null;
     layer.envelope = data.envelope.map(kf => ({ ...kf }));
     layer.linkedLayerIds = [...data.linkedLayerIds];
+    applyV030LayerFields(layer, data);
     return layer;
   }
 
@@ -206,6 +241,7 @@ function deserializeLayer(data: SerializedLayer): ILayer {
     layer.setParameter(key, val);
   }
   layer.modifiers = data.modifiers.map(deserializeModifier);
+  applyV030LayerFields(layer, data);
   return layer;
 }
 
@@ -214,9 +250,10 @@ function deserializeLayer(data: SerializedLayer): ILayer {
 // ---------------------------------------------------------------------------
 
 export function deserializeProject(data: SerializedProject): Project {
+  // Alpha: we don't hard-reject older file versions — just warn and attempt a best-effort load.
   if (data.__version !== FORMAT_VERSION) {
-    throw new Error(
-      `Unsupported project file version ${data.__version} (expected ${FORMAT_VERSION}).`,
+    console.warn(
+      `[projectSerializer] File version ${data.__version} (current: ${FORMAT_VERSION}). Loading anyway — some data may be missing or ignored.`,
     );
   }
   return {
@@ -227,5 +264,11 @@ export function deserializeProject(data: SerializedProject): Project {
     playhead: data.playhead,
     loop: data.loop,
     layers: data.layers.map(deserializeLayer),
+    // v0.3.0 fields - fall back to defaults when absent (old files)
+    tracks: data.tracks ? JSON.parse(JSON.stringify(data.tracks)) : [],
+    patterns: data.patterns ? JSON.parse(JSON.stringify(data.patterns)) : [],
+    cueList: data.cueList ? JSON.parse(JSON.stringify(data.cueList)) : [],
+    bpm: data.bpm,
+    timeSignature: data.timeSignature ? [...data.timeSignature] : undefined,
   };
 }

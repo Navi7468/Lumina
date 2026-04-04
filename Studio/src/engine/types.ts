@@ -142,6 +142,16 @@ export interface ILayer {
   
   // Modifier stack (post-processing)
   modifiers?: ModifierInstance[];
+
+  // --- v0.3.0 additions ---
+  /** Which Track this clip belongs to (undefined = unassigned, legacy) */
+  trackId?: string;
+  /** Effect chain config — when set, overrides the single-effect path */
+  effectChainConfig?: EffectChainConfig;
+  /** Node graph config — when set, used in Node layout mode */
+  nodeGraphConfig?: NodeGraphConfig;
+  /** If this clip is a pattern instance, the source pattern ID */
+  patternId?: string;
   
   // Get the rendered output at a specific time
   renderAtTime(time: number, ledCount: number): LEDFrame;
@@ -165,4 +175,124 @@ export interface Project {
   selectedLayerId: string | null;
   playhead: number; // current time in ms
   loop: boolean; // whether playback should loop
+  tracks?: Track[];
+  patterns?: Pattern[];
+  cueList?: Cue[];
+  bpm?: number;           // beats per minute (default undefined = no BPM)
+  timeSignature?: [number, number]; // e.g. [4, 4]
+}
+
+// -- Tracks -----------------------------------------------------------------
+
+/** A named, colored lane on the timeline. Clips (ILayer) belong to tracks. */
+export interface Track {
+  id: string;
+  name: string;
+  color: string;           // CSS hex color, e.g. '#6366f1'
+  ledRange: [number, number]; // default LED range [start, end] (inclusive)
+  muted: boolean;
+  soloed: boolean;
+  locked: boolean;
+  expanded: boolean;
+  height: number;          // row height in px (min 48)
+  type: 'normal' | 'bus';  // bus tracks composite child tracks through their own effect chain
+  parentId?: string;       // if set, this track is a child of a bus track
+}
+
+// -- Effect Chain -----------------------------------------------------------
+
+/** Mix mode for how one EffectBlock's output merges into the running frame. */
+export type EffectBlockMixMode = 'replace' | 'add' | 'multiply' | 'screen' | 'normal';
+
+/**
+ * A single block in an EffectChain. Each block runs one IEffect (or IModifier)
+ * and merges its output into the accumulated frame via mixMode.
+ */
+export interface EffectBlock {
+  id: string;
+  /** Registry ID of the effect or modifier */
+  effectId: string;
+  /** Whether this block is a modifier (true) or a generative effect (false) */
+  isModifier: boolean;
+  enabled: boolean;
+  mixMode: EffectBlockMixMode;
+  mixAmount: number;       // 0–1, how strongly this block blends in
+  parameters: EffectParameters;
+}
+
+/**
+ * Configuration for a clip using the chain authoring model (v0.3+).
+ * When present on an ILayer, the chain is used instead of the single effect.
+ */
+export interface EffectChainConfig {
+  blocks: EffectBlock[];
+}
+
+// -- Node Graph -------------------------------------------------------------
+
+export type NodePortType = 'frame' | 'color' | 'number' | 'boolean';
+
+export interface NodePort {
+  id: string;
+  label: string;
+  type: NodePortType;
+}
+
+export interface GraphNode {
+  id: string;
+  /** Registry ID or built-in node type */
+  nodeType: string;
+  label: string;
+  x: number;
+  y: number;
+  parameters: EffectParameters;
+  inputs: NodePort[];
+  outputs: NodePort[];
+}
+
+export interface NodeConnection {
+  id: string;
+  fromNodeId: string;
+  fromPortId: string;
+  toNodeId: string;
+  toPortId: string;
+}
+
+/** Full node graph configuration for a clip (alternative to EffectChainConfig). */
+export interface NodeGraphConfig {
+  nodes: GraphNode[];
+  connections: NodeConnection[];
+  /** The single output node that produces the final LEDFrame */
+  outputNodeId: string;
+}
+
+// -- Patterns & Cues --------------------------------------------------------
+
+/**
+ * A reusable group of clip IDs. Multiple instances of a pattern can be placed
+ * on the timeline; editing the pattern's clips updates all instances.
+ */
+export interface Pattern {
+  id: string;
+  name: string;
+  /** IDs of ILayer objects that belong to this pattern */
+  clipIds: string[];
+  /** Duration of the pattern in ms (for display; actual clips may vary) */
+  duration: number;
+  color?: string;
+}
+
+/**
+ * A cue that can be triggered live. References a pattern to start playback at
+ * the cue's timeline position, or triggers an immediate one-shot pattern.
+ */
+export interface Cue {
+  id: string;
+  name: string;
+  /** Pattern to trigger (undefined = jump-to position only) */
+  patternId?: string;
+  /** Timeline position in ms to jump to on trigger */
+  timelinePosition: number;
+  /** Optional keyboard key label (e.g. 'F1', '1') for live triggering */
+  triggerKey?: string;
 }
