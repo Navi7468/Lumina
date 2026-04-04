@@ -3,7 +3,7 @@
 A desktop application for creating, sequencing, and controlling LED strip animations via UDP. Built with Tauri, React, and TypeScript for the editor, with a lightweight C++ receiver for Raspberry Pi.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)
+![Version](https://img.shields.io/badge/version-0.1.7--alpha-orange.svg)
 
 ## What is this?
 
@@ -84,16 +84,29 @@ sudo ./udpleds
 
 ## Configuration
 
-Edit `Receiver/config/config.h` before building to configure:
-- LED count and GPIO pin
-- UDP port (default: 7777) and buffer size
-- Target frame rate
-- Packet timeout and fade behavior
-- Performance monitoring settings
+The receiver is configured at **runtime** via a JSON file. Copy
+`Receiver/config/config.json` to the build directory and edit it before running
+`./udpleds`. If the file is absent the receiver falls back to compiled-in defaults.
 
-See [Receiver/README.md](Receiver/README.md) for detailed configuration options.
+Available keys:
 
-Note: Studio app network settings (IP and port) work for connecting to the receiver, but most other settings don't persist yet.
+| Key | Default | Description |
+|-----|---------|-------------|
+| `udp_port` | 7777 | UDP port the receiver listens on |
+| `led_count` | 60 | Number of LEDs on the strip |
+| `gpio_pin` | 18 | GPIO pin for data signal |
+| `target_fps` | 60 | Render loop frame rate |
+| `packet_timeout_ms` | 1000 | Fade-to-black timeout (ms) |
+| `fade_steps` | 30 | Number of frames to fade over |
+
+`led_count` is capped at the compile-time `LED_COUNT` value in `config.h` (the
+buffer-size ceiling). To support more than 60 LEDs, rebuild with an updated
+`config.h`.
+
+See [Receiver/README.md](Receiver/README.md) for full setup instructions.
+
+Note: Studio network settings (IP and port) connect to the receiver; most other
+project settings don't persist yet (save/load is planned).
 
 ## Known Issues
 

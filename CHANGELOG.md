@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.1.7] - 2026-04-03
+
+### Changed
+
+- **Studio: extract menu into `src-tauri/src/menu.rs`** — `build_menu()` builds the
+  full application menu; `handle_menu_event()` handles all menu events. Both are
+  standalone functions, removing the 150-line inline closure from `main.rs`. Menu
+  event handlers now emit frontend events for every item (previously several just
+  called `println!`) so all items are wired for future frontend listeners.
+
+- **Studio: `main.rs` reduced to 24 lines** — only module declarations, state setup,
+  and command registration remain.
+
+### Docs
+
+- **`README.md` version badge** updated from `0.1.0-alpha` to `0.1.7-alpha`.
+- **`README.md` Configuration section** rewritten to document the runtime `config.json`
+  approach (introduced in v0.1.4) and its available keys, replacing the outdated
+  "edit `config.h` before building" instructions.
+- **`Studio/REFACTORING.md`** — menu extraction items marked done.
+
 ## [0.1.6] - 2026-04-03
 
 ### Changed

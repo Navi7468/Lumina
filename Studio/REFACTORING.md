@@ -11,8 +11,8 @@ This document tracks planned architectural improvements and refactoring work for
 - [x] Create `PacketBuilder` struct to handle protocol serialization — extracted to `src-tauri/src/protocol.rs` (v0.1.5)
 - [x] Extract UDP communication to `src-tauri/src/udp.rs` module — done (v0.1.6)
 - [x] Create `src-tauri/src/protocol.rs` for packet format definitions — done (v0.1.5)
-- [ ] Extract menu creation into separate `src-tauri/src/menu.rs` module — planned v0.1.7
-- [ ] Extract menu event handlers to dedicated handler functions — planned v0.1.7
+- [x] Extract menu creation into separate `src-tauri/src/menu.rs` module — done (v0.1.7)
+- [x] Extract menu event handlers to dedicated handler functions — done (v0.1.7)
 - [ ] Add proper error types (e.g., `UdpError`, `PacketError`) instead of `String`
 
 ## Frontend (TypeScript/React)
