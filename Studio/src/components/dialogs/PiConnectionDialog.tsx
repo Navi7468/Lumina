@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Wifi, WifiOff, Play, Move } from 'lucide-react';
+import { Wifi, WifiOff, Play, Move, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -30,7 +31,7 @@ export function PiConnectionDialog() {
   const [open, setOpen] = useState(false);
   const [ip, setIp] = useState(project.config.piIp);
   const [port, setPort] = useState(project.config.piPort.toString());
-  const [error, setError] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Listen for menu event to open connection dialog
   useEffect(() => {
@@ -50,16 +51,18 @@ export function PiConnectionDialog() {
 
   const handleConnect = async () => {
     try {
-      setError(null);
-      const result = await invoke<string>('connect_to_pi', {
+      setIsConnecting(true);
+      await invoke<string>('connect_to_pi', {
         ip,
         port: parseInt(port),
       });
-      console.log(result);
       setPiConnected(true);
       setOpen(false);
+      toast.success(`Connected to ${ip}:${port}`);
     } catch (err) {
-      setError(err as string);
+      toast.error(`Connection failed: ${err}`);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -67,6 +70,7 @@ export function PiConnectionDialog() {
     try {
       await invoke('disconnect');
       setPiConnected(false);
+      toast.info('Disconnected from Pi');
     } catch (err) {
       console.error('Failed to disconnect:', err);
     }
@@ -171,20 +175,17 @@ export function PiConnectionDialog() {
               />
             </div>
 
-            {error && (
-              <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950 p-2 rounded">
-                {error}
-              </div>
-            )}
           </div>
 
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setOpen(false)}>
+            <Button variant="secondary" onClick={() => setOpen(false)} disabled={isConnecting}>
               Cancel
             </Button>
-            <Button onClick={handleConnect}>
-              <Wifi className="h-4 w-4 mr-2" />
-              Connect
+            <Button onClick={handleConnect} disabled={isConnecting}>
+              {isConnecting
+                ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                : <Wifi className="h-4 w-4 mr-2" />}
+              {isConnecting ? 'Connecting…' : 'Connect'}
             </Button>
           </DialogFooter>
         </DialogContent>

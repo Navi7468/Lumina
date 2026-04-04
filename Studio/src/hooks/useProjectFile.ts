@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { save as dialogSave, open as dialogOpen } from '@tauri-apps/api/dialog';
 import { writeTextFile, readTextFile } from '@tauri-apps/api/fs';
+import { toast } from 'sonner';
 import { useProjectStore } from '@/store/projectStore';
 import { usePlaybackStore } from '@/store/playbackStore';
 import { serializeProject, deserializeProject } from '@/lib/projectSerializer';
@@ -31,8 +32,10 @@ export function useProjectFile() {
 
         const data = serializeProject(project);
         await writeTextFile(path, JSON.stringify(data, null, 2));
+        toast.success('Project saved');
       } catch (err) {
         console.error('[useProjectFile] Failed to save project:', err);
+        toast.error('Failed to save project');
       }
     },
     [project, currentPath],
@@ -52,8 +55,10 @@ export function useProjectFile() {
       stop();
       loadProject(proj);
       setCurrentPath(chosen);
+      toast.success('Project loaded');
     } catch (err) {
       console.error('[useProjectFile] Failed to open project:', err);
+      toast.error('Failed to open project');
     }
   }, [loadProject, stop]);
 

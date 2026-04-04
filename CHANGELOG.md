@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-04-04
+
+### Added
+
+- **Studio: toast notifications via `sonner`** — save, open, connect, and disconnect
+  actions now show non-blocking toast notifications (bottom-right, dark theme).
+  `<Toaster />` mounted in `main.tsx`.
+
+### Changed
+
+- **Studio: `PiConnectionDialog` shows a spinner while connecting** — the Connect
+  button displays an animated `Loader2` icon and is disabled during the `invoke`
+  call, preventing double-clicks. Error messages are now shown as `toast.error()`
+  instead of an inline red div; successful connect and disconnect also fire toasts.
+
+- **Studio: `useProjectFile` emits toasts on save/open** — `toast.success('Project
+  saved')` fires after a successful write; `toast.success('Project loaded')` fires
+  after a successful open; `toast.error(…)` fires on any failure in either path.
+
 ## [0.2.4] - 2026-04-04
 
 ### Added
