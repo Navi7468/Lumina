@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Project, ILayer, ProjectConfig } from '@/engine/types';
+import type { Project, ILayer, ProjectConfig, Track, Pattern, Cue } from '@/engine/types';
 import { EffectLayer } from '@/engine/Layer';
 import { AdjustmentLayer } from '@/engine/AdjustmentLayer';
 import { EffectRegistry } from '@/engine/EffectRegistry';
@@ -54,6 +54,23 @@ interface ProjectState {
   canUndo: () => boolean;
   canRedo: () => boolean;
 
+  // Track management
+  addTrack: (name?: string, ledRange?: [number, number]) => void;
+  removeTrack: (trackId: string) => void;
+  updateTrack: (trackId: string, updates: Partial<Track>) => void;
+  moveTrack: (trackId: string, newIndex: number) => void;
+  assignClipToTrack: (layerId: string, trackId: string | null) => void;
+
+  // Pattern management
+  addPattern: (name: string, clipIds?: string[]) => void;
+  removePattern: (patternId: string) => void;
+  updatePattern: (patternId: string, updates: Partial<Pattern>) => void;
+
+  // Cue management
+  addCue: (name: string, timelinePosition: number) => void;
+  removeCue: (cueId: string) => void;
+  updateCue: (cueId: string, updates: Partial<Cue>) => void;
+
   // Project management
   newProject: () => void;
   loadProject: (project: Project) => void;
@@ -74,6 +91,9 @@ const createDefaultProject = (): Project => ({
     packetTimeoutMs: 2000, // 2 second default timeout
   },
   layers: [],
+  tracks: [],
+  patterns: [],
+  cueList: [],
   selectedLayerId: null,
   playhead: 0,
   loop: false, // default to looping disabled
@@ -464,6 +484,133 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         },
       };
     }),
+
+    // Track management
+    addTrack: (name, ledRange) => setWithHistory((state) => {
+      const newTrack: Track = {
+        id: crypto.randomUUID(),
+        name: name ?? `Track ${(state.project.tracks ?? []).length + 1}`,
+        color: '#6366f1',
+        ledRange: ledRange ?? [0, state.project.config.ledCount - 1],
+        muted: false,
+        soloed: false,
+        locked: false,
+        expanded: true,
+        height: 48,
+        type: 'normal',
+      };
+      return {
+        project: {
+          ...state.project,
+          tracks: [...(state.project.tracks ?? []), newTrack],
+        },
+      };
+    }),
+
+    removeTrack: (trackId) => setWithHistory((state) => ({
+      project: {
+        ...state.project,
+        tracks: (state.project.tracks ?? []).filter((t) => t.id !== trackId),
+        // Unassign layers that were on this track
+        layers: state.project.layers.map((l) =>
+          l.trackId === trackId ? Object.assign(l, { trackId: undefined }) : l
+        ),
+      },
+    })),
+
+    updateTrack: (trackId, updates) => setWithHistory((state) => ({
+      project: {
+        ...state.project,
+        tracks: (state.project.tracks ?? []).map((t) =>
+          t.id === trackId ? { ...t, ...updates } : t
+        ),
+      },
+    })),
+
+    moveTrack: (trackId, newIndex) => setWithHistory((state) => {
+      const tracks = [...(state.project.tracks ?? [])];
+      const currentIndex = tracks.findIndex((t) => t.id === trackId);
+      if (currentIndex === -1) return state;
+      const [track] = tracks.splice(currentIndex, 1);
+      tracks.splice(newIndex, 0, track);
+      return { project: { ...state.project, tracks } };
+    }),
+
+    assignClipToTrack: (layerId, trackId) => setWithHistory((state) => ({
+      project: {
+        ...state.project,
+        layers: state.project.layers.map((l) => {
+          if (l.id === layerId) {
+            Object.assign(l, { trackId: trackId ?? undefined });
+            return l;
+          }
+          return l;
+        }),
+      },
+    })),
+
+    // Pattern management
+    addPattern: (name, clipIds = []) => setWithHistory((state) => {
+      const newPattern: Pattern = {
+        id: crypto.randomUUID(),
+        name,
+        clipIds,
+        duration: 5000,
+      };
+      return {
+        project: {
+          ...state.project,
+          patterns: [...(state.project.patterns ?? []), newPattern],
+        },
+      };
+    }),
+
+    removePattern: (patternId) => setWithHistory((state) => ({
+      project: {
+        ...state.project,
+        patterns: (state.project.patterns ?? []).filter((p) => p.id !== patternId),
+      },
+    })),
+
+    updatePattern: (patternId, updates) => setWithHistory((state) => ({
+      project: {
+        ...state.project,
+        patterns: (state.project.patterns ?? []).map((p) =>
+          p.id === patternId ? { ...p, ...updates } : p
+        ),
+      },
+    })),
+
+    // Cue management
+    addCue: (name, timelinePosition) => setWithHistory((state) => {
+      const newCue: Cue = {
+        id: crypto.randomUUID(),
+        name,
+        timelinePosition,
+      };
+      return {
+        project: {
+          ...state.project,
+          cueList: [...(state.project.cueList ?? []), newCue],
+        },
+      };
+    }),
+
+    removeCue: (cueId) => setWithHistory((state) => ({
+      project: {
+        ...state.project,
+        cueList: (state.project.cueList ?? []).filter((c) => c.id !== cueId),
+      },
+    })),
+
+    updateCue: (cueId, updates) => setWithHistory((state) => ({
+      project: {
+        ...state.project,
+        cueList: (state.project.cueList ?? []).map((c) =>
+          c.id === cueId ? { ...c, ...updates } : c
+        ),
+      },
+    })),
 
     newProject: () => set({
       project: createDefaultProject(),

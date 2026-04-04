@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-04
+
+### Added
+
+- **Studio: track, pattern, and cue store actions in `projectStore`** — new actions:
+  - Track: `addTrack`, `removeTrack`, `updateTrack`, `moveTrack`, `assignClipToTrack`
+  - Pattern: `addPattern`, `removePattern`, `updatePattern`
+  - Cue: `addCue`, `removeCue`, `updateCue`
+  All actions go through `setWithHistory` and are undo/redo-safe.
+- `createDefaultProject()` now initialises `tracks`, `patterns`, and `cueList` as
+  empty arrays so the `Project` shape is always complete at runtime.
+
 ## [0.3.0] - 2026-04-04
 
 ### Added
