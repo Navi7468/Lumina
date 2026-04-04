@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-04-03
+
+### Added
+
+- **Studio: `NewProjectDialog`** — **File › New Project** (and Ctrl+N) now opens a
+  dialog instead of silently wiping the current project. Fields: project name, LED
+  count, FPS, and duration (in seconds). If the current project has content, the
+  dialog shows a warning and changes the confirm button label to "Discard & Create".
+  A FilePlus2 toolbar button in `AppHeader` also triggers the dialog.
+
+### Changed
+
+- **Studio: `useKeyboardShortcuts` extended with file commands** — `file.new`
+  (Ctrl+N), `file.save` (Ctrl+S), and `file.open` (Ctrl+O) are now wired in
+  `App.tsx`. `file.new` emits the `new-project` event (picked up by the dialog);
+  `file.save` and `file.open` call the existing `useProjectFile` actions directly.
+
+- **Studio: `NewProjectDialog` owns the `new-project` event** — the temporary
+  `handleNewProject` callback in `App.tsx` has been removed; the dialog subscribes
+  to the `new-project` Tauri event internally, consistent with the `SettingsDialog`
+  pattern.
+
 ## [0.2.0] - 2026-04-03
 
 ### Added

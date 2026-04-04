@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { emit } from '@tauri-apps/api/event';
 import { LEDPreview } from './components/preview/LEDPreview';
 import { LEDSelectionPreview } from './components/preview/LEDSelectionPreview';
 import { SelectionToolbar } from './components/common/SelectionToolbar';
@@ -28,7 +29,6 @@ function App() {
     updateLayer,
     undo,
     redo,
-    newProject,
   } = useProjectStore();
   const { isPlaying, play, pause, stop } = usePlaybackStore();
   const { isPiConnected, isStreamingOnPlayback, isStreamingOnScrub } = usePiStore();
@@ -122,18 +122,21 @@ function App() {
     'view.toggleSelectionMode': () => {
       setSelectionMode(!selectionMode);
     },
+    // File commands
+    'file.new':  () => { emit('new-project'); },
+    'file.save': () => saveProject(),
+    'file.open': () => openProject(),
   });
   
   // File menu handlers
   const { save: saveProject, open: openProject } = useProjectFile();
-  const handleNewProject = useCallback(() => { stop(); newProject(); }, [stop, newProject]);
 
   // Menu event bridge (Tauri → store actions)
   useMenuEvents({
     play,
     pause,
     stop,
-    newProject: handleNewProject,
+    // new-project is handled by NewProjectDialog directly
     openProject,
     saveProject: () => saveProject(),
     saveProjectAs: () => saveProject(true),

@@ -4,6 +4,7 @@ import { PiConnectionDialog } from '../dialogs/PiConnectionDialog';
 import { SettingsDialog } from '../dialogs/SettingsDialog';
 import { PaletteManagerDialog } from '../dialogs/PaletteManager';
 import { PreferencesDialog } from '../dialogs/PreferencesDialog';
+import { NewProjectDialog } from '../dialogs/NewProjectDialog';
 
 interface AppHeaderProps {
   onHeightChange: (height: number) => void;
@@ -30,6 +31,8 @@ export function AppHeader({ onHeightChange }: AppHeaderProps) {
           <div>{project.config.ledCount} LEDs</div>
           <div>{project.config.fps} FPS</div>
         </div>
+        <div className="h-6 w-px bg-border mx-1" />
+        <NewProjectDialog />
         <div className="h-6 w-px bg-border mx-1" />
         <PiConnectionDialog />
         <div className="h-6 w-px bg-border mx-1" />
