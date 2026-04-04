@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-04-04
+
+### Added
+
+- **Studio: `scripts/sync-version.mjs`** — single-command version sync across all three
+  version files. `package.json` is the version source (fields: `version` + `versionSuffix`).
+  Running `npm run version:sync` (or `node scripts/sync-version.mjs [version] [suffix]`)
+  writes the semver to `tauri.conf.json` and `Cargo.toml`, generates
+  `src/lib/buildInfo.ts` (exporting `VERSION_SUFFIX`), and updates the README badge.
+- **Studio: `src/lib/buildInfo.ts`** — auto-generated file exporting `APP_VERSION` and
+  `VERSION_SUFFIX` so the app can read the build-time suffix at runtime.
+- **Studio: auto-colored README badge** — badge color is selected automatically based on
+  `versionSuffix`: `alpha` → red, `beta` → orange, `rc` → yellow, *(stable)* → brightgreen,
+  other → blue.
+
+### Fixed
+
+- **Studio: version bumped to 0.2.4 in all files** — `tauri.conf.json`, `package.json`,
+  and `Cargo.toml` were all stuck at `0.1.0`, causing `getVersion()` (and the
+  About dialog) to display the wrong version. All three are now at `0.2.4` via the new
+  sync script.
+- **Studio: About dialog version suffix dynamic** — removed hardcoded `-alpha` string;
+  the dialog now reads `VERSION_SUFFIX` from `buildInfo.ts` and formats the version
+  as `{version}-{suffix}` (or just `{version}` for stable releases).
+
+## [0.2.3] - 2026-04-04
+
+### Added
+
+- **Studio: `AboutDialog`** — **Help › About** (and the toolbar Info button) now
+  opens a dialog showing the app version (read live from Tauri's `getVersion()`),
+  platform stack, and a one-line description. **Help › Documentation** is also wired
+  and calls `shell::open` when clicked. Both `open-about` and `open-docs` Tauri
+  events are consumed by this component.
+
+### Changed
+
+- **Studio: `useMenuEvents` extended with `undo`/`redo` handlers** — **Edit › Undo**
+  and **Edit › Redo** now call `projectStore.undo()` / `projectStore.redo()` via the
+  `edit-undo` / `edit-redo` Tauri events. Previously these menu items emitted events
+  that nothing listened to.
+
 ## [0.2.2] - 2026-04-04
 
 ### Fixed

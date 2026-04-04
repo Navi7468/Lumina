@@ -1,8 +1,8 @@
 [package]
 name = "lumina-studio"
-version = "0.1.0"
+version = "0.2.4"
 description = "Lumina - LED Animation Sequencer"
-authors = ["you"]
+authors = ["Navi7468"]
 license = ""
 repository = ""
 edition = "2021"

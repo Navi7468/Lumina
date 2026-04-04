@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "LED Controller",
-    "version": "0.1.0"
+    "version": "0.2.4"
   },
   "tauri": {
     "allowlist": {
@@ -18,13 +18,19 @@
       },
       "protocol": {
         "asset": true,
-        "assetScope": ["**"]
+        "assetScope": [
+          "**"
+        ]
       },
       "fs": {
         "all": false,
         "readFile": true,
         "writeFile": true,
-        "scope": ["$HOME/**", "$DOCUMENT/**", "$DESKTOP/**"]
+        "scope": [
+          "$HOME/**",
+          "$DOCUMENT/**",
+          "$DESKTOP/**"
+        ]
       },
       "dialog": {
         "all": false,

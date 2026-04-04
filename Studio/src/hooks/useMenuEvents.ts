@@ -10,6 +10,9 @@ interface MenuEventHandlers {
   openProject?: () => void;
   saveProject?: () => void;
   saveProjectAs?: () => void;
+  // Optional edit-menu handlers
+  undo?: () => void;
+  redo?: () => void;
 }
 
 /**
@@ -24,6 +27,8 @@ export function useMenuEvents({
   openProject,
   saveProject,
   saveProjectAs,
+  undo,
+  redo,
 }: MenuEventHandlers) {
   useEffect(() => {
     const subs = [
@@ -34,8 +39,10 @@ export function useMenuEvents({
       ...(openProject   ? [listen('open-project',    () => openProject!())]   : []),
       ...(saveProject   ? [listen('save-project',    () => saveProject!())]   : []),
       ...(saveProjectAs ? [listen('save-project-as', () => saveProjectAs!())] : []),
+      ...(undo          ? [listen('edit-undo',        () => undo!())]          : []),
+      ...(redo          ? [listen('edit-redo',        () => redo!())]          : []),
     ];
 
     return () => { subs.forEach(p => p.then(fn => fn())); };
-  }, [play, pause, stop, newProject, openProject, saveProject, saveProjectAs]);
+  }, [play, pause, stop, newProject, openProject, saveProject, saveProjectAs, undo, redo]);
 }

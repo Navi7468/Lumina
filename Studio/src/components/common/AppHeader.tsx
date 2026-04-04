@@ -5,6 +5,7 @@ import { SettingsDialog } from '../dialogs/SettingsDialog';
 import { PaletteManagerDialog } from '../dialogs/PaletteManager';
 import { PreferencesDialog } from '../dialogs/PreferencesDialog';
 import { NewProjectDialog } from '../dialogs/NewProjectDialog';
+import { AboutDialog } from '../dialogs/AboutDialog';
 
 interface AppHeaderProps {
   onHeightChange: (height: number) => void;
@@ -39,6 +40,7 @@ export function AppHeader({ onHeightChange }: AppHeaderProps) {
         <SettingsDialog />
         <PaletteManagerDialog />
         <PreferencesDialog />
+        <AboutDialog />
       </div>
     </div>
   );

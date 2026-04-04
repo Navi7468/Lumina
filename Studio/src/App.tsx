@@ -140,6 +140,8 @@ function App() {
     openProject,
     saveProject: () => saveProject(),
     saveProjectAs: () => saveProject(true),
+    undo,
+    redo,
   });
 
   // Apply theme on load and when it changes
