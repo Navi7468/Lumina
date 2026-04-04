@@ -8,28 +8,12 @@ This document tracks planned architectural improvements and refactoring work for
 
 **Priority: Medium**
 
-Current issues:
-- Menu creation is repetitive and verbose (150+ lines of boilerplate)
-- Packet building code duplicated across `send_frame`, `send_static_frame`, and `set_timeout`
-- Menu event handlers are a large match statement with repetitive pattern
-- Using `String` for errors instead of proper error types
-- All UDP logic in main.rs instead of separate module
-
-Planned improvements:
-- [ ] Extract menu creation into separate module with builder pattern or macro
-- [ ] Create `PacketBuilder` struct to handle protocol serialization
-- [ ] Extract menu event handlers to dedicated handler functions
-- [ ] Add proper error types (e.g., `UdpError`, `PacketError`)
-- [ ] Extract UDP communication to `src-tauri/src/udp.rs` module
-- [ ] Consider creating `src-tauri/src/protocol.rs` for packet format definitions
-
-Example PacketBuilder API:
-```rust
-let packet = PacketBuilder::new(PACKET_TYPE_FRAME)
-    .sequence(sequence)
-    .payload(&rgb_data)
-    .build();
-```
+- [x] Create `PacketBuilder` struct to handle protocol serialization — extracted to `src-tauri/src/protocol.rs` (v0.1.5)
+- [x] Extract UDP communication to `src-tauri/src/udp.rs` module — done (v0.1.6)
+- [x] Create `src-tauri/src/protocol.rs` for packet format definitions — done (v0.1.5)
+- [ ] Extract menu creation into separate `src-tauri/src/menu.rs` module — planned v0.1.7
+- [ ] Extract menu event handlers to dedicated handler functions — planned v0.1.7
+- [ ] Add proper error types (e.g., `UdpError`, `PacketError`) instead of `String`
 
 ## Frontend (TypeScript/React)
 
@@ -61,7 +45,6 @@ let packet = PacketBuilder::new(PACKET_TYPE_FRAME)
 ## Design & Assets
 
 - [ ] Replace placeholder app icons with custom branded icons
-  - Current icons in `src-tauri/icons/` are Tauri defaults
   - Need: 32x32, 128x128, 256x256, icon.icns (macOS), icon.ico (Windows)
   - Design should reflect LED/lighting theme
 

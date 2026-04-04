@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.1.6] - 2026-04-03
+
+### Changed
+
+- **Studio: extract UDP commands into `src-tauri/src/udp.rs`** — all five Tauri
+  commands (`connect_to_pi`, `send_frame`, `send_static_frame`, `set_timeout`,
+  `disconnect`) and the `UdpState` type moved out of `main.rs` into a dedicated
+  `udp` module. `main.rs` now only handles app setup + command registration.
+
+### Docs
+
+- **`Studio/REFACTORING.md` updated** — backend items completed in v0.1.5/v0.1.6
+  are marked done; remaining frontend and menu tasks are preserved.
+## [0.1.6] - 2026-04-03
+
+### Refactored
+
+- **Studio: extract `udp.rs` module** — `UdpState` struct and all five Tauri UDP commands
+  (`connect_to_pi`, `send_frame`, `send_static_frame`, `set_timeout`, `disconnect`) have
+  been moved from `main.rs` to `src-tauri/src/udp.rs`. `main.rs` now only holds the Tauri
+  app setup (menu and builder chain) and is ~170 lines vs the original ~300.
 
 ## [0.1.5] - 2026-04-03
 

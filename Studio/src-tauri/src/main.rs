@@ -1,91 +1,12 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// NOTE: Planned refactoring tracked in Studio/REFACTORING.md
-// Main areas: menu builder pattern, separate UDP module
-
 mod protocol;
+mod udp;
 
-use protocol::{PacketBuilder, PACKET_TYPE_FRAME, PACKET_TYPE_STATIC_FRAME, PACKET_TYPE_SET_TIMEOUT};
+use udp::UdpState;
 use tauri::{Menu, Submenu, MenuItem, CustomMenuItem, Manager};
-use std::net::UdpSocket;
 use std::sync::Mutex;
-use tauri::State;
-
-// UDP State
-struct UdpState(Mutex<Option<UdpSocket>>);
-
-#[tauri::command]
-fn connect_to_pi(state: State<UdpState>, ip: String, port: u16) -> Result<String, String> {
-    let socket = UdpSocket::bind("0.0.0.0:0")
-        .map_err(|e| format!("Failed to create socket: {}", e))?;
-    
-    socket.connect(format!("{}:{}", ip, port))
-        .map_err(|e| format!("Failed to connect: {}", e))?;
-    
-    *state.0.lock().unwrap() = Some(socket);
-    Ok(format!("Connected to {}:{}", ip, port))
-}
-
-#[tauri::command]
-fn send_frame(state: State<UdpState>, sequence: u32, rgb_data: Vec<u8>) -> Result<(), String> {
-    let socket_guard = state.0.lock().unwrap();
-
-    if let Some(socket) = socket_guard.as_ref() {
-        let packet = PacketBuilder::new(PACKET_TYPE_FRAME)
-            .sequence(sequence)
-            .payload(&rgb_data)
-            .build();
-
-        socket.send(&packet)
-            .map_err(|e| format!("Failed to send: {}", e))?;
-        Ok(())
-    } else {
-        Err("Not connected to Pi".to_string())
-    }
-}
-
-#[tauri::command]
-fn send_static_frame(state: State<UdpState>, sequence: u32, rgb_data: Vec<u8>) -> Result<(), String> {
-    let socket_guard = state.0.lock().unwrap();
-
-    if let Some(socket) = socket_guard.as_ref() {
-        let packet = PacketBuilder::new(PACKET_TYPE_STATIC_FRAME)
-            .sequence(sequence)
-            .payload(&rgb_data)
-            .build();
-
-        socket.send(&packet)
-            .map_err(|e| format!("Failed to send: {}", e))?;
-        Ok(())
-    } else {
-        Err("Not connected to Pi".to_string())
-    }
-}
-
-#[tauri::command]
-fn set_timeout(state: State<UdpState>, timeout_ms: u32) -> Result<(), String> {
-    let socket_guard = state.0.lock().unwrap();
-
-    if let Some(socket) = socket_guard.as_ref() {
-        let packet = PacketBuilder::new(PACKET_TYPE_SET_TIMEOUT)
-            .sequence(0) // timeout packets don't need sequence tracking
-            .payload(&timeout_ms.to_le_bytes())
-            .build();
-
-        socket.send(&packet)
-            .map_err(|e| format!("Failed to send timeout: {}", e))?;
-        Ok(())
-    } else {
-        Err("Not connected to Pi".to_string())
-    }
-}
-
-#[tauri::command]
-fn disconnect(state: State<UdpState>) -> Result<(), String> {
-    *state.0.lock().unwrap() = None;
-    Ok(())
-}
 
 fn main() {
     // Create menu items
@@ -95,7 +16,7 @@ fn main() {
     let save_as = CustomMenuItem::new("save-as".to_string(), "Save As...");
     let settings = CustomMenuItem::new("settings".to_string(), "Settings");
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-    
+
     let undo = CustomMenuItem::new("undo".to_string(), "Undo");
     let redo = CustomMenuItem::new("redo".to_string(), "Redo");
     let cut = CustomMenuItem::new("cut".to_string(), "Cut");
@@ -103,16 +24,16 @@ fn main() {
     let paste = CustomMenuItem::new("paste".to_string(), "Paste");
     let preferences = CustomMenuItem::new("preferences".to_string(), "Preferences");
     let palettes = CustomMenuItem::new("palettes".to_string(), "Color Palettes...");
-    
+
     let about = CustomMenuItem::new("about".to_string(), "About");
     let docs = CustomMenuItem::new("docs".to_string(), "Documentation");
-    
+
     let play = CustomMenuItem::new("play".to_string(), "Play");
     let pause = CustomMenuItem::new("pause".to_string(), "Pause");
     let stop = CustomMenuItem::new("stop".to_string(), "Stop");
     let connect_pi = CustomMenuItem::new("connect-pi".to_string(), "Connect to Pi");
     let disconnect_pi = CustomMenuItem::new("disconnect-pi".to_string(), "Disconnect from Pi");
-    
+
     // Create submenus
     let file_menu = Submenu::new(
         "File",
@@ -126,7 +47,7 @@ fn main() {
             .add_native_item(MenuItem::Separator)
             .add_item(quit)
     );
-    
+
     let edit_menu = Submenu::new(
         "Edit",
         Menu::new()
@@ -140,14 +61,14 @@ fn main() {
             .add_item(preferences)
             .add_item(palettes)
     );
-    
+
     let help_menu = Submenu::new(
         "Help",
         Menu::new()
             .add_item(about)
             .add_item(docs)
     );
-    
+
     let playback_menu = Submenu::new(
         "Playback",
         Menu::new()
@@ -158,7 +79,7 @@ fn main() {
             .add_item(connect_pi)
             .add_item(disconnect_pi)
     );
-    
+
     // Build the main menu
     let menu = Menu::new()
         .add_submenu(file_menu)
@@ -236,12 +157,13 @@ fn main() {
         })
         .manage(UdpState(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
-            connect_to_pi,
-            send_frame,
-            send_static_frame,
-            set_timeout,
-            disconnect
+            udp::connect_to_pi,
+            udp::send_frame,
+            udp::send_static_frame,
+            udp::set_timeout,
+            udp::disconnect
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
