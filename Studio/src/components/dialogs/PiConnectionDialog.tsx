@@ -14,18 +14,19 @@ import { Input } from '../ui/input';
 import { invoke } from '@tauri-apps/api/tauri';
 import { listen } from '@tauri-apps/api/event';
 import { useProjectStore } from '@/store/projectStore';
+import { usePiStore } from '@/store/piStore';
 import { cn } from '@/lib/utils';
 
 export function PiConnectionDialog() {
+  const { project } = useProjectStore();
   const { 
-    project, 
     isPiConnected, 
     isStreamingOnPlayback, 
     isStreamingOnScrub, 
     setPiConnected, 
     setStreamingOnPlayback, 
     setStreamingOnScrub 
-  } = useProjectStore();
+  } = usePiStore();
   const [open, setOpen] = useState(false);
   const [ip, setIp] = useState(project.config.piIp);
   const [port, setPort] = useState(project.config.piPort.toString());

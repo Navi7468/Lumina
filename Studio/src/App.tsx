@@ -22,6 +22,8 @@ import { PaletteManagerDialog } from './components/dialogs/PaletteManager';
 import { PreferencesDialog } from './components/dialogs/PreferencesDialog';
 import { PiConnectionDialog } from './components/dialogs/PiConnectionDialog';
 import { useProjectStore } from './store/projectStore';
+import { usePlaybackStore } from './store/playbackStore';
+import { usePiStore } from './store/piStore';
 import { usePreferencesStore, type Theme } from './store/preferencesStore';
 import { renderEngine } from './engine/RenderEngine';
 import { listen } from '@tauri-apps/api/event';
@@ -35,18 +37,13 @@ import { Sparkles, Layers, Clock, Settings, Eye } from 'lucide-react';
 function App() {
   const { 
     project, 
-    isPlaying, 
-    isPiConnected, 
-    isStreamingOnPlayback, 
-    isStreamingOnScrub, 
     setPlayhead, 
-    play, 
-    pause, 
-    stop,
     updateLayer,
     undo,
     redo,
   } = useProjectStore();
+  const { isPlaying, play, pause, stop } = usePlaybackStore();
+  const { isPiConnected, isStreamingOnPlayback, isStreamingOnScrub } = usePiStore();
   const { 
     theme, 
     leftSidebarWidth, 

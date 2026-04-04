@@ -7,10 +7,6 @@ import { ModifierRegistry } from '@/engine/ModifierRegistry';
 
 interface ProjectState {
   project: Project;
-  isPlaying: boolean;
-  isPiConnected: boolean;
-  isStreamingOnPlayback: boolean;
-  isStreamingOnScrub: boolean;
 
   // History
   history: {
@@ -24,18 +20,10 @@ interface ProjectState {
 
   // Playhead control
   setPlayhead: (time: number) => void;
-  play: () => void;
-  pause: () => void;
-  stop: () => void;
   toggleLoop: () => void;
   skipToEnd: () => void;
   stepBackward: () => void;
   stepForward: () => void;
-
-  // Pi Connection
-  setPiConnected: (connected: boolean) => void;
-  setStreamingOnPlayback: (enabled: boolean) => void;
-  setStreamingOnScrub: (enabled: boolean) => void;
 
   // Layer management
   addLayer: (effectId: string, name?: string) => void;
@@ -120,10 +108,6 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   return {
     project: createDefaultProject(),
-    isPlaying: false,
-    isPiConnected: false,
-    isStreamingOnPlayback: true,  // Default: stream during playback
-    isStreamingOnScrub: true,    // Default: stream on scrub
     history: {
       past: [],
       future: [],
@@ -142,13 +126,6 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     setPlayhead: (time) => set((state) => ({
       project: { ...state.project, playhead: Math.max(0, Math.min(time, state.project.config.duration)) },
-    })),
-
-    play: () => set({ isPlaying: true }),
-    pause: () => set({ isPlaying: false }),
-    stop: () => set((state) => ({
-      isPlaying: false,
-      project: { ...state.project, playhead: 0 },
     })),
 
     toggleLoop: () => set((state) => ({
@@ -174,10 +151,6 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         project: { ...state.project, playhead: newPlayhead },
       };
     }),
-
-    setPiConnected: (connected) => set({ isPiConnected: connected }),
-    setStreamingOnPlayback: (enabled) => set({ isStreamingOnPlayback: enabled }),
-    setStreamingOnScrub: (enabled) => set({ isStreamingOnScrub: enabled }),
 
     addLayer: (effectId, name) => setWithHistory((state) => {
       const effect = EffectRegistry.get(effectId);
@@ -490,13 +463,11 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     newProject: () => set({
       project: createDefaultProject(),
-      isPlaying: false,
       history: { past: [], future: [] },
     }),
 
     loadProject: (project) => set({
       project,
-      isPlaying: false,
       history: { past: [], future: [] },
     }),
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-04-03
+
+### Changed
+
+- **Studio: split `projectStore.ts` into three domain stores** — `playbackStore.ts`
+  owns `isPlaying` and `play`/`pause`/`stop` actions; `piStore.ts` owns
+  `isPiConnected`, `isStreamingOnPlayback`, `isStreamingOnScrub` and their setters;
+  `projectStore.ts` retains project data, undo/redo history, and all layer/modifier/
+  envelope actions. `App.tsx`, `PiConnectionDialog.tsx`, and `Timeline.tsx` updated
+  to import from the correct store. Components that only use project data are
+  unaffected. Reduces unnecessary re-renders from unrelated state changes.
+
 ## [0.1.7] - 2026-04-03
 
 ### Changed

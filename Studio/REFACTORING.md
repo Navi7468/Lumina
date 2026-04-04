@@ -26,7 +26,7 @@ This document tracks planned architectural improvements and refactoring work for
 ### State Management
 
 - [ ] Review Zustand store organization (currently one large store)
-- [ ] Consider splitting into domain-specific stores
+- [x] Split into domain-specific stores: `playbackStore`, `piStore`, `projectStore` (v0.1.8)
 - [ ] Audit history implementation for memory leaks
 
 ### Component Architecture

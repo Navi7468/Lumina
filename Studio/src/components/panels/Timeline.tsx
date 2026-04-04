@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward, StepBack, StepForward, ZoomIn, ZoomOut, Layers, Repeat } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useProjectStore } from '@/store/projectStore';
+import { usePlaybackStore } from '@/store/playbackStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { AdjustmentLayer } from '@/engine/AdjustmentLayer';
 import { cn } from '@/lib/utils';
@@ -16,7 +17,8 @@ interface ClipDragState {
 }
 
 export function Timeline() {
-  const { project, isPlaying, setPlayhead, play, pause, stop, toggleLoop, skipToEnd, stepBackward, stepForward, updateLayer, selectLayer } = useProjectStore();
+  const { project, setPlayhead, toggleLoop, skipToEnd, stepBackward, stepForward, updateLayer, selectLayer } = useProjectStore();
+  const { isPlaying, play, pause, stop } = usePlaybackStore();
   const { playhead, config, layers, selectedLayerId, loop } = project;
   const { timelineRenderer } = usePreferencesStore();
   
