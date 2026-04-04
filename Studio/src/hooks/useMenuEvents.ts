@@ -5,22 +5,37 @@ interface MenuEventHandlers {
   play: () => void;
   pause: () => void;
   stop: () => void;
+  // Optional file-menu handlers
+  newProject?: () => void;
+  openProject?: () => void;
+  saveProject?: () => void;
+  saveProjectAs?: () => void;
 }
 
 /**
- * Hook to listen for playback-related Tauri menu events and bridge them to
- * the playback store actions.
+ * Hook to listen for Tauri menu events and bridge them to store actions.
+ * Covers both playback events and optional file-menu events.
  */
-export function useMenuEvents({ play, pause, stop }: MenuEventHandlers) {
+export function useMenuEvents({
+  play,
+  pause,
+  stop,
+  newProject,
+  openProject,
+  saveProject,
+  saveProjectAs,
+}: MenuEventHandlers) {
   useEffect(() => {
-    const unlistenPlay = listen('playback-play', () => play());
-    const unlistenPause = listen('playback-pause', () => pause());
-    const unlistenStop = listen('playback-stop', () => stop());
+    const subs = [
+      listen('playback-play',   () => play()),
+      listen('playback-pause',  () => pause()),
+      listen('playback-stop',   () => stop()),
+      ...(newProject    ? [listen('new-project',     () => newProject!())]    : []),
+      ...(openProject   ? [listen('open-project',    () => openProject!())]   : []),
+      ...(saveProject   ? [listen('save-project',    () => saveProject!())]   : []),
+      ...(saveProjectAs ? [listen('save-project-as', () => saveProjectAs!())] : []),
+    ];
 
-    return () => {
-      unlistenPlay.then((fn) => fn());
-      unlistenPause.then((fn) => fn());
-      unlistenStop.then((fn) => fn());
-    };
-  }, [play, pause, stop]);
+    return () => { subs.forEach(p => p.then(fn => fn())); };
+  }, [play, pause, stop, newProject, openProject, saveProject, saveProjectAs]);
 }

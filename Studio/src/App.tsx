@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { LEDPreview } from './components/preview/LEDPreview';
 import { LEDSelectionPreview } from './components/preview/LEDSelectionPreview';
 import { SelectionToolbar } from './components/common/SelectionToolbar';
@@ -16,6 +16,7 @@ import { usePiStreaming } from './hooks/usePiStreaming';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePlayback } from './hooks/usePlayback';
 import { useMenuEvents } from './hooks/useMenuEvents';
+import { useProjectFile } from './hooks/useProjectFile';
 import { useResizableSashes } from './hooks/useResizableSashes';
 import { Module } from './components/common/Module';
 import { Sparkles, Layers, Clock, Settings, Eye } from 'lucide-react';
@@ -27,6 +28,7 @@ function App() {
     updateLayer,
     undo,
     redo,
+    newProject,
   } = useProjectStore();
   const { isPlaying, play, pause, stop } = usePlaybackStore();
   const { isPiConnected, isStreamingOnPlayback, isStreamingOnScrub } = usePiStore();
@@ -122,8 +124,20 @@ function App() {
     },
   });
   
-  // Menu event bridge (Tauri → playback actions)
-  useMenuEvents({ play, pause, stop });
+  // File menu handlers
+  const { save: saveProject, open: openProject } = useProjectFile();
+  const handleNewProject = useCallback(() => { stop(); newProject(); }, [stop, newProject]);
+
+  // Menu event bridge (Tauri → store actions)
+  useMenuEvents({
+    play,
+    pause,
+    stop,
+    newProject: handleNewProject,
+    openProject,
+    saveProject: () => saveProject(),
+    saveProjectAs: () => saveProject(true),
+  });
 
   // Apply theme on load and when it changes
   useEffect(() => {

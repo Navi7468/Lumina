@@ -19,6 +19,17 @@
       "protocol": {
         "asset": true,
         "assetScope": ["**"]
+      },
+      "fs": {
+        "all": false,
+        "readFile": true,
+        "writeFile": true,
+        "scope": ["$HOME/**", "$DOCUMENT/**", "$DESKTOP/**"]
+      },
+      "dialog": {
+        "all": false,
+        "open": true,
+        "save": true
       }
     },
     "bundle": {
