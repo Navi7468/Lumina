@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-04-04
+
+### Fixed
+
+- **Studio: undo/redo now correctly restores class instances** — history snapshots
+  were previously stored with `structuredClone`, which strips the prototype chain
+  from class instances (`EffectLayer`, `AdjustmentLayer`, `IEffect`, `IModifier`).
+  After an undo the layers became plain objects and the render engine crashed.
+  Snapshots are now stored as `SerializedProject` DTOs (via `serializeProject`) and
+  reconstructed as proper class instances (via `deserializeProject`) on restore.
+
+- **Studio: undo snapshot no longer contains the post-mutation state** — `updateLayer`
+  mutates the layer instance in-place via `Object.assign`. Previously the snapshot
+  was taken *after* `updater(state)` ran, so the "before" snapshot already contained
+  the new value. The snapshot is now taken in `setWithHistory` *before* the updater
+  runs, so undo correctly reverts the change.
+
+### Changed
+
+- **Studio: `projectStore` history type changed to `SerializedProject[]`** — `past`
+  and `future` arrays now hold serialized DTOs rather than live `Project` objects,
+  keeping the history stack JSON-safe and decoupled from the live object graph.
+
 ## [0.2.1] - 2026-04-03
 
 ### Added

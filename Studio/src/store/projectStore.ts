@@ -4,14 +4,15 @@ import { EffectLayer } from '@/engine/Layer';
 import { AdjustmentLayer } from '@/engine/AdjustmentLayer';
 import { EffectRegistry } from '@/engine/EffectRegistry';
 import { ModifierRegistry } from '@/engine/ModifierRegistry';
+import { serializeProject, deserializeProject, type SerializedProject } from '@/lib/projectSerializer';
 
 interface ProjectState {
   project: Project;
 
   // History
   history: {
-    past: Project[];
-    future: Project[];
+    past: SerializedProject[];
+    future: SerializedProject[];
   };
 
   // Project actions
@@ -82,11 +83,14 @@ export const useProjectStore = create<ProjectState>((set, get) => {
   // Helper to save current project to history before making changes
   const setWithHistory = (updater: (state: ProjectState) => Partial<ProjectState>) => {
     set((state) => {
+      // Snapshot the current project BEFORE the updater runs so mutations
+      // inside updater (e.g. Object.assign in updateLayer) don't corrupt it.
+      const snapshot = serializeProject(state.project);
       const updates = updater(state);
 
       // Only save to history if project is being modified
       if (updates.project && updates.project !== state.project) {
-        const newPast = [...state.history.past, structuredClone(state.project)];
+        const newPast = [...state.history.past, snapshot];
 
         // Limit history size
         if (newPast.length > MAX_HISTORY_SIZE) {
@@ -476,14 +480,22 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         return state;
       }
 
-      const previous = state.history.past[state.history.past.length - 1];
+      const snapshot = state.history.past[state.history.past.length - 1];
       const newPast = state.history.past.slice(0, -1);
+
+      let previous: Project;
+      try {
+        previous = deserializeProject(snapshot);
+      } catch (err) {
+        console.error('[undo] Failed to deserialize snapshot:', err);
+        return state;
+      }
 
       return {
         project: previous,
         history: {
           past: newPast,
-          future: [state.project, ...state.history.future],
+          future: [serializeProject(state.project), ...state.history.future],
         },
       };
     }),
@@ -493,13 +505,21 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         return state;
       }
 
-      const next = state.history.future[0];
+      const snapshot = state.history.future[0];
       const newFuture = state.history.future.slice(1);
+
+      let next: Project;
+      try {
+        next = deserializeProject(snapshot);
+      } catch (err) {
+        console.error('[redo] Failed to deserialize snapshot:', err);
+        return state;
+      }
 
       return {
         project: next,
         history: {
-          past: [...state.history.past, state.project],
+          past: [...state.history.past, serializeProject(state.project)],
           future: newFuture,
         },
       };
