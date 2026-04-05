@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-04-04
+
+### Added
+
+- **Studio: `EditorTab.tsx`** — new Preferences tab containing timeline renderer,
+  grid settings (snap, grid size, show grid), and the experimental collapsible
+  section (master toggle + WebGL Timeline + WebGL LED Preview toggles). WebGL
+  renderer option under Timeline Renderer is only shown when
+  `experimental.enabled && experimental.webglTimeline` are both true.
+- **Studio: "Editor" tab in Preferences dialog** — third tab alongside General and
+  Keyboard Shortcuts; uses `SlidersHorizontal` icon.
+
+### Changed
+
+- **Studio: `GeneralTab.tsx` slimmed down** — now contains only Theme, Layout Mode,
+  and Auto-Save. Timeline renderer, grid, and experimental controls moved to
+  `EditorTab.tsx`.
+- **Studio: Studio/Node layout options hidden behind experimental flag** — the Layout
+  Mode dropdown in General tab only shows Studio and Node when
+  `experimental.enabled` is true. Helper text updates to guide users to the Editor
+  tab when experimental is off.
+- **Studio: `AppHeader.onHeightChange` made optional** — allows `LayoutProvider` to
+  render the header in coming-soon layouts without needing a height callback.
+
 ## [0.3.3] - 2026-04-04
 
 ### Added

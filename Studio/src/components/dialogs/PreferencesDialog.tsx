@@ -8,9 +8,10 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Settings, Keyboard } from 'lucide-react';
+import { Settings, Keyboard, SlidersHorizontal } from 'lucide-react';
 import { listen } from '@tauri-apps/api/event';
 import { GeneralTab } from './tabs/GeneralTab';
+import { EditorTab } from './tabs/EditorTab';
 import { KeyboardShortcutsTab } from './tabs/KeyboardShortcutsTab';
 
 export function PreferencesDialog() {
@@ -53,10 +54,14 @@ export function PreferencesDialog() {
         
         <Tabs defaultValue="general" className="flex-1 overflow-hidden flex flex-col">
           {/* Tabs */}
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               General
+            </TabsTrigger>
+            <TabsTrigger value="editor" className="flex items-center gap-2">
+              <SlidersHorizontal className="w-4 h-4" />
+              Editor
             </TabsTrigger>
             <TabsTrigger value="keyboard" className="flex items-center gap-2">
               <Keyboard className="w-4 h-4" />
@@ -67,6 +72,11 @@ export function PreferencesDialog() {
           {/* General Settings */}
           <TabsContent value="general" className="flex-1 overflow-y-auto mt-4">
             <GeneralTab onApplyTheme={applyTheme} />
+          </TabsContent>
+
+          {/* Editor Settings */}
+          <TabsContent value="editor" className="flex-1 overflow-y-auto mt-4">
+            <EditorTab />
           </TabsContent>
           
           {/* Keyboard Shortcuts */}

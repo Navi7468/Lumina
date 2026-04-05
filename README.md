@@ -3,7 +3,7 @@
 A desktop application for creating, sequencing, and controlling LED strip animations via UDP. Built with Tauri, React, and TypeScript for the editor, with a lightweight C++ receiver for Raspberry Pi.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-0.3.3--alpha-red.svg)
+![Version](https://img.shields.io/badge/version-0.3.4--alpha-red.svg)
 
 ## What is this?
 
