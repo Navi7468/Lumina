@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { usePreferencesStore, type Theme, type TimelineRenderer } from '@/store/preferencesStore';
+import { usePreferencesStore, type Theme, type TimelineRenderer, type LayoutMode } from '@/store/preferencesStore';
 
 interface GeneralTabProps {
   onApplyTheme: (theme: Theme) => void;
@@ -15,6 +15,7 @@ export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
   const [tempPrefs, setTempPrefs] = useState({
     theme: preferences.theme,
     timelineRenderer: preferences.timelineRenderer,
+    layoutMode: preferences.layoutMode,
     autoSave: preferences.autoSave,
     autoSaveInterval: preferences.autoSaveInterval,
     showGridInPreview: preferences.showGridInPreview,
@@ -27,6 +28,7 @@ export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
     setTempPrefs({
       theme: preferences.theme,
       timelineRenderer: preferences.timelineRenderer,
+      layoutMode: preferences.layoutMode,
       autoSave: preferences.autoSave,
       autoSaveInterval: preferences.autoSaveInterval,
       showGridInPreview: preferences.showGridInPreview,
@@ -44,7 +46,11 @@ export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
   useEffect(() => {
     preferences.setTimelineRenderer(tempPrefs.timelineRenderer);
   }, [tempPrefs.timelineRenderer]);
-  
+
+  useEffect(() => {
+    preferences.setLayoutMode(tempPrefs.layoutMode);
+  }, [tempPrefs.layoutMode]);
+
   useEffect(() => {
     preferences.setAutoSave(tempPrefs.autoSave);
   }, [tempPrefs.autoSave]);
@@ -70,7 +76,30 @@ export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
       {/* Appearance */}
       <div className="space-y-3">
         <h3 className="text-sm font-medium">Appearance</h3>
-        
+
+        <div className="space-y-2">
+          <Label htmlFor="layout-mode">Layout Mode</Label>
+          <Select
+            value={tempPrefs.layoutMode}
+            onValueChange={(value: string) => setTempPrefs({
+              ...tempPrefs,
+              layoutMode: value as LayoutMode
+            })}
+          >
+            <SelectTrigger id="layout-mode">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="daw">DAW (Default)</SelectItem>
+              <SelectItem disabled value="studio">Studio - coming soon</SelectItem>
+              <SelectItem disabled value="node">Node - coming soon</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            DAW: classic timeline. Studio: multi-panel creative view. Node: visual effect graph.
+          </p>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="theme">Theme</Label>
           <Select

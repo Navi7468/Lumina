@@ -8,7 +8,7 @@ import { NewProjectDialog } from '../dialogs/NewProjectDialog';
 import { AboutDialog } from '../dialogs/AboutDialog';
 
 interface AppHeaderProps {
-  onHeightChange: (height: number) => void;
+  onHeightChange?: (height: number) => void;
 }
 
 export function AppHeader({ onHeightChange }: AppHeaderProps) {
@@ -17,7 +17,7 @@ export function AppHeader({ onHeightChange }: AppHeaderProps) {
 
   useEffect(() => {
     if (ref.current) {
-      onHeightChange(ref.current.offsetHeight);
+      onHeightChange?.(ref.current.offsetHeight);
     }
   }, [onHeightChange]);
 

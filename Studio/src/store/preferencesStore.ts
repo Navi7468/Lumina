@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type TimelineRenderer = 'html' | 'canvas';
+export type LayoutMode = 'daw' | 'studio' | 'node';
 
 export interface KeyBinding {
   id: string;
@@ -150,9 +151,12 @@ interface PreferencesState {
   effectsLibraryHeight: number; // percentage of left sidebar
   previewHeight: number; // percentage of center area
   
+  layoutMode: LayoutMode;
+
   // Actions
   setTheme: (theme: Theme) => void;
   setTimelineRenderer: (renderer: TimelineRenderer) => void;
+  setLayoutMode: (mode: LayoutMode) => void;
   setAutoSave: (enabled: boolean) => void;
   setAutoSaveInterval: (minutes: number) => void;
   setShowGridInPreview: (show: boolean) => void;
@@ -172,6 +176,7 @@ export const usePreferencesStore = create<PreferencesState>()(
     (set, get) => ({
       theme: 'system',
       timelineRenderer: 'html',
+      layoutMode: 'daw' as LayoutMode,
       autoSave: false,
       autoSaveInterval: 5,
       showGridInPreview: false,
@@ -185,6 +190,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       
       setTheme: (theme) => set({ theme }),
       setTimelineRenderer: (renderer) => set({ timelineRenderer: renderer }),
+      setLayoutMode: (mode) => set({ layoutMode: mode }),
       setAutoSave: (enabled) => set({ autoSave: enabled }),
       setAutoSaveInterval: (minutes) => set({ autoSaveInterval: minutes }),
       setShowGridInPreview: (show) => set({ showGridInPreview: show }),

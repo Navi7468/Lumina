@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-04-04
+
+### Added
+
+- **Studio: `LayoutMode` type in `preferencesStore`** — `'daw' | 'studio' | 'node'`
+  field with default `'daw'`, persisted alongside other preferences.
+- **Studio: `LayoutProvider` component** (`src/components/layout/LayoutProvider.tsx`)
+  — wraps the app and renders the correct top-level layout based on `layoutMode`.
+  Studio and Node modes show a "coming soon" placeholder; DAW mode passes through
+  to the existing layout unchanged.
+- **Studio: Layout Mode selector in Preferences → General tab** — lets users switch
+  layout mode from within the settings dialog.
+
+### Changed
+
+- **Studio: `App.tsx` delegates layout rendering to `LayoutProvider`** — the app
+  root now wraps its JSX in `<LayoutProvider>`, enabling future layout switching
+  without further changes to App.tsx.
+
 ## [0.3.1] - 2026-04-04
 
 ### Added

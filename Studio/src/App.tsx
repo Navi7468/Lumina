@@ -20,6 +20,7 @@ import { useMenuEvents } from './hooks/useMenuEvents';
 import { useProjectFile } from './hooks/useProjectFile';
 import { useResizableSashes } from './hooks/useResizableSashes';
 import { Module } from './components/common/Module';
+import { LayoutProvider } from './components/layout/LayoutProvider';
 import { Sparkles, Layers, Clock, Settings, Eye } from 'lucide-react';
 
 function App() {
@@ -186,6 +187,7 @@ function App() {
   );
   
   return (
+    <LayoutProvider>
     <div className="h-screen flex flex-col bg-background text-foreground relative">
       <AppHeader onHeightChange={setHeaderHeight} />
       
@@ -297,6 +299,7 @@ function App() {
         {renderSashes(headerHeight)}
       </div>
     </div>
+    </LayoutProvider>
   );
 }
 
