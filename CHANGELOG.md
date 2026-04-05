@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-04-04
+
+### Added
+
+- **Studio: `ExperimentalConfig` in `preferencesStore`** — new `experimental` field
+  `{ enabled, webglTimeline, webglPreview }` (all `false` by default), persisted with
+  other preferences. Controlled via `setExperimental(updates)` action.
+- **Studio: `TimelineRenderer` extended** — type now includes `'webgl'` in addition to
+  `'html'` and `'canvas'`. The WebGL option is only surfaced in the UI when
+  `experimental.enabled && experimental.webglTimeline` are both true.
+- **Studio: Experimental section in Preferences → General tab** — collapsible section
+  with amber warning banner, master enable toggle, and individual toggles for
+  WebGL Timeline and WebGL LED Preview.
+
 ## [0.3.2] - 2026-04-04
 
 ### Added

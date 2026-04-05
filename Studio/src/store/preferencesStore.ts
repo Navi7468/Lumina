@@ -2,8 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type Theme = 'light' | 'dark' | 'system';
-export type TimelineRenderer = 'html' | 'canvas';
+export type TimelineRenderer = 'html' | 'canvas' | 'webgl';
 export type LayoutMode = 'daw' | 'studio' | 'node';
+
+export interface ExperimentalConfig {
+  enabled: boolean;
+  webglTimeline: boolean;
+  webglPreview: boolean;
+}
 
 export interface KeyBinding {
   id: string;
@@ -152,11 +158,13 @@ interface PreferencesState {
   previewHeight: number; // percentage of center area
   
   layoutMode: LayoutMode;
+  experimental: ExperimentalConfig;
 
   // Actions
   setTheme: (theme: Theme) => void;
   setTimelineRenderer: (renderer: TimelineRenderer) => void;
   setLayoutMode: (mode: LayoutMode) => void;
+  setExperimental: (updates: Partial<ExperimentalConfig>) => void;
   setAutoSave: (enabled: boolean) => void;
   setAutoSaveInterval: (minutes: number) => void;
   setShowGridInPreview: (show: boolean) => void;
@@ -177,6 +185,11 @@ export const usePreferencesStore = create<PreferencesState>()(
       theme: 'system',
       timelineRenderer: 'html',
       layoutMode: 'daw' as LayoutMode,
+      experimental: {
+        enabled: false,
+        webglTimeline: false,
+        webglPreview: false,
+      },
       autoSave: false,
       autoSaveInterval: 5,
       showGridInPreview: false,
@@ -191,6 +204,9 @@ export const usePreferencesStore = create<PreferencesState>()(
       setTheme: (theme) => set({ theme }),
       setTimelineRenderer: (renderer) => set({ timelineRenderer: renderer }),
       setLayoutMode: (mode) => set({ layoutMode: mode }),
+      setExperimental: (updates) => set((state) => ({
+        experimental: { ...state.experimental, ...updates },
+      })),
       setAutoSave: (enabled) => set({ autoSave: enabled }),
       setAutoSaveInterval: (minutes) => set({ autoSaveInterval: minutes }),
       setShowGridInPreview: (show) => set({ showGridInPreview: show }),

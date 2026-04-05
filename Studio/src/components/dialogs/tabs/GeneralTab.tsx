@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { usePreferencesStore, type Theme, type TimelineRenderer, type LayoutMode } from '@/store/preferencesStore';
+
+// TODO(v0.3.4): Refactor this tab — split into a dedicated "Editor" tab.
+// - Move timeline renderer, grid settings, and experimental section to EditorTab.tsx
+// - Keep GeneralTab for: Theme, Layout Mode, Auto-Save only
+// - Experimental options (Studio/Node layouts, WebGL renderer) should remain in
+//   their natural input locations but be conditionally shown when experimental.enabled
+//   is true, rather than being in a separate collapsible section.
 
 interface GeneralTabProps {
   onApplyTheme: (theme: Theme) => void;
@@ -11,11 +19,13 @@ interface GeneralTabProps {
 
 export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
   const preferences = usePreferencesStore();
+  const [experimentalOpen, setExperimentalOpen] = useState(false);
   
   const [tempPrefs, setTempPrefs] = useState({
     theme: preferences.theme,
     timelineRenderer: preferences.timelineRenderer,
     layoutMode: preferences.layoutMode,
+    experimental: preferences.experimental,
     autoSave: preferences.autoSave,
     autoSaveInterval: preferences.autoSaveInterval,
     showGridInPreview: preferences.showGridInPreview,
@@ -29,6 +39,7 @@ export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
       theme: preferences.theme,
       timelineRenderer: preferences.timelineRenderer,
       layoutMode: preferences.layoutMode,
+      experimental: preferences.experimental,
       autoSave: preferences.autoSave,
       autoSaveInterval: preferences.autoSaveInterval,
       showGridInPreview: preferences.showGridInPreview,
@@ -50,6 +61,10 @@ export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
   useEffect(() => {
     preferences.setLayoutMode(tempPrefs.layoutMode);
   }, [tempPrefs.layoutMode]);
+
+  useEffect(() => {
+    preferences.setExperimental(tempPrefs.experimental);
+  }, [tempPrefs.experimental]);
 
   useEffect(() => {
     preferences.setAutoSave(tempPrefs.autoSave);
@@ -141,8 +156,11 @@ export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="html">HTML (Current)</SelectItem>
+              <SelectItem value="html">HTML (Default)</SelectItem>
               <SelectItem value="canvas">Canvas (Experimental)</SelectItem>
+              {tempPrefs.experimental.enabled && tempPrefs.experimental.webglTimeline && (
+                <SelectItem value="webgl">WebGL (Experimental)</SelectItem>
+              )}
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
@@ -236,6 +254,95 @@ export function GeneralTab({ onApplyTheme }: GeneralTabProps) {
                 autoSaveInterval: parseInt(e.target.value) || 5
               })}
             />
+          </div>
+        )}      </div>
+
+      {/* Experimental */}
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => setExperimentalOpen((o) => !o)}
+          className="flex w-full items-center justify-between text-sm font-medium"
+        >
+          <span>Experimental</span>
+          {experimentalOpen ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
+
+        {experimentalOpen && (
+          <div className="space-y-3">
+            {/* Amber warning banner */}
+            <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Experimental features may be unstable, incomplete, or change without
+                notice. Use at your own risk.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="exp-enabled">Enable Experimental Features</Label>
+                <p className="text-xs text-muted-foreground">
+                  Master toggle for all experimental options
+                </p>
+              </div>
+              <Switch
+                id="exp-enabled"
+                checked={tempPrefs.experimental.enabled}
+                onCheckedChange={(checked: boolean) =>
+                  setTempPrefs({
+                    ...tempPrefs,
+                    experimental: { ...tempPrefs.experimental, enabled: checked },
+                  })
+                }
+              />
+            </div>
+
+            {tempPrefs.experimental.enabled && (
+              <>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="exp-webgl-timeline">WebGL Timeline</Label>
+                    <p className="text-xs text-muted-foreground">
+                      GPU-accelerated timeline rendering
+                    </p>
+                  </div>
+                  <Switch
+                    id="exp-webgl-timeline"
+                    checked={tempPrefs.experimental.webglTimeline}
+                    onCheckedChange={(checked: boolean) =>
+                      setTempPrefs({
+                        ...tempPrefs,
+                        experimental: { ...tempPrefs.experimental, webglTimeline: checked },
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="exp-webgl-preview">WebGL LED Preview</Label>
+                    <p className="text-xs text-muted-foreground">
+                      GPU-accelerated LED strip preview
+                    </p>
+                  </div>
+                  <Switch
+                    id="exp-webgl-preview"
+                    checked={tempPrefs.experimental.webglPreview}
+                    onCheckedChange={(checked: boolean) =>
+                      setTempPrefs({
+                        ...tempPrefs,
+                        experimental: { ...tempPrefs.experimental, webglPreview: checked },
+                      })
+                    }
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
